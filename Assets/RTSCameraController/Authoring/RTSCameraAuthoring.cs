@@ -7,45 +7,16 @@ namespace GalacticBoundStudios.RTSCamera
 {
     public class RTSCameraAuthoring : MonoBehaviour
     {
-        [Header("Camera Movement Parameters")]
-
-        [Header("Horizontal Movement")]
-        [SerializeField]
-        protected float horizontalAcceleration = 5;
-        [SerializeField]
-        protected float maxHorizontalSpeed = 10;
-        [SerializeField]
-        protected float horizontalDamping = 15;
-
-        [Header("Zoom")]
-        [SerializeField]
-        protected float zoomAcceleration = 2f;
-        [SerializeField]
-        protected float maxZoomSpeed = 5;
-        [SerializeField]
-        protected float zoomDamping = 75f;
-        [SerializeField]
-        protected float minHeight = 5;
-        [SerializeField]
-        protected float maxHeight = 20;
-
-        [Header("Rotation")]
-        [SerializeField]
-        protected float rotationAcceleration = 2f;
-        [SerializeField]
-        protected float maxRotationSpeed = 8;
-        [SerializeField]
-        protected float rotationDamping = 7.5f;
-
-        [Header("Edge Scrolling")]
-        [SerializeField]
-        protected float edgeTolerance = 0.05f;
-
-        [Header("Constraints")]
-        [SerializeField]
-        protected float2 zoomRange = new float2(5, 20);
-        [SerializeField]
-        protected float2 verticalAngleBounds = new float2(0, 90);
+        // Determines how fast the camera moves horizontally
+        public float movementSpeed = 20f;
+        // Determines how fast the camera rotates
+        public float rotationSpeed = 50f;
+        // Determines how fast the camera rotates when the right mouse button is held
+        public float mouseRotationSpeed = 100f;
+        // Determines how fast the camera zooms in and out
+        public float zoomSpeed = 10f;
+        // Determines how close the cursor has to be to the edge of the screen to trigger edge scrolling
+        public float edgeMoveThreshold = 0.05f;
 
         protected class Baker : Baker<RTSCameraAuthoring>
         {
@@ -53,58 +24,20 @@ namespace GalacticBoundStudios.RTSCamera
             {
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-                AddComponent(entity, new RTSCameraHorizontalMovementSettings
+                AddComponent(entity, new RTSCameraMovementSettings
                 {
-                    horizontalAcceleration = authoring.horizontalAcceleration,
-                    maxHorizontalSpeed = authoring.maxHorizontalSpeed,
-                    horizontalDamping = authoring.horizontalDamping,
+                    movementSpeed = authoring.movementSpeed,
+                    rotationSpeed = authoring.rotationSpeed,
+                    mouseRotationSpeed = authoring.mouseRotationSpeed,
+                    zoomSpeed = authoring.zoomSpeed,
+                    edgeMoveThreshold = authoring.edgeMoveThreshold
                 });
 
-                AddComponent(entity, new RTSCameraZoomSettings
+                AddComponent(entity, new RTSCameraMoveData
                 {
-                    zoomAcceleration = authoring.zoomAcceleration,
-                    maxZoomSpeed = authoring.maxZoomSpeed,
-                    zoomDamping = authoring.zoomDamping,
-                });
-
-                AddComponent(entity, new RTSCameraRotationSettings
-                {
-                    rotationAcceleration = authoring.rotationAcceleration,
-                    maxRotationSpeed = authoring.maxRotationSpeed,
-                    rotationDamping = authoring.rotationDamping,
-                });
-
-                AddComponent(entity, new RTSCameraEdgeScrollSettings
-                {
-                    edgeTolerance = authoring.edgeTolerance
-                });
-
-                AddComponent(entity, new RTSCameraInputData
-                {
-                    cameraMoveAcceleration = new int3(0, 0, 0),
-                    cameraRotationAcceleration = new int3(0, 0, 0),
-
-                    isRotatingByMouse = false,
-                    lastMousePos = new float2(0, 0)
-                });
-
-                AddComponent(entity, new RTSCameraVelocityData
-                {
-                    positionVelocity = new float3(0, 0, 0),
-                    rotationVelocity = quaternion.identity,
-                    zoomVelocity = 0
-                });
-
-                AddComponent(entity, new RTSCameraCursorData
-                {
-                    rayOrigin = new float3(0, 0, 0),
-                    rayDirection = new float3(0, 0, 0)
-                });
-
-                AddComponent(entity, new RTSCameraConstraints
-                {
-                    zoomRange = authoring.zoomRange,
-                    verticalAngleBounds = authoring.verticalAngleBounds
+                    horizontalMovement = float3.zero,
+                    zoom = 0,
+                    rotation = float3.zero
                 });
             }
         }
