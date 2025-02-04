@@ -10,12 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: HexTechDefaultMapConfig
-  m_EditorClassIdentifier: Assembly-CSharp:GalacticBoundStudios.HexTech:HexMapConfig
-  pointyTopHexagons: 1
-  mapScale: {x: 1, y: 1}
-  mapOffset: {x: 0, y: 0, z: 0}
-  hollow: 1
-  innerRadius: 0.9
-  chunkSize: 30
-  gridShape: 1
+  m_Name: RTSCameraDefaultCOnfig
+  m_EditorClassIdentifier: Assembly-CSharp:GalacticBoundStudios.RTSCamera:RTSCameraConfig
+  movementSpeed: 20
+  rotationSpeed: 50
+  mouseRotationSpeed: 100
+  zoomSpeed: 10
+  edgeMoveThreshold: 0.05

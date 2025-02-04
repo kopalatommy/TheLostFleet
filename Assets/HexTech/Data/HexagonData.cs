@@ -140,6 +140,21 @@ namespace GalacticBoundStudios.HexTech
         public bool hollow = false;
         public float innerRadius = 0.7f;
 
+        public int chunkSize = 10;
+
         public HexGridShape gridShape = HexGridShape.Hexagon;
+
+        public HexMapTransformData TransformData
+        {
+            get
+            {
+                return new HexMapTransformData
+                {
+                    orientation = pointyTopHexagons ? HexOrientation.PointyTop() : HexOrientation.FlatTop(),
+                    scale = mapScale,
+                    origin = mapOffset
+                };
+            }
+        }
     }
 }

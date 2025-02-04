@@ -1,29 +1,30 @@
 # Hex Tech Structure
 
-## Primary Features
+## Components
 
-1. Generate a hexagon grid of variable size and shape.
+### Generation
 
-    A. Grid Shapes:
-        - Square
-        - Hexagon
-        - Triangle
-        - Circle
-        - Custom
+#### HexagonMeshGenerator
 
-    B. Grid Sizes:
-        - Will be based on the shape of the grid.
+    This is a ISystem that generates the mesh for the hexagon grid. It handles converting a map of hexagons into mesh data.
 
-    C. Able to offset the world position of the grid.
+### Managers
 
-2. Interact with the grid
+#### HexMapManager
 
-    A. Convert mouse position to grid position.
+    This is a MonoBehaviour that acts as an intermediate between the DOTS and MonoBehaviour systems. It listens for various events that can be forwarded to the DOTS systems.
 
-3. Generate a mesh for the grid.
+    1. OnCreateHexagon(HexCoord coord)
+    2. OnSelectHexagon(HexCoord coord)
 
-    A. Mesh will be generated based on the shape of the grid.
+### Shaders
 
-4. Pathfinding
+#### ColorableMaterial
 
-    A. A* Pathfinding
+    This is a material that uses the color array provided to meshes.
+
+### UI
+
+
+
+### Utilities

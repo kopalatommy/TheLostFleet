@@ -16,8 +16,6 @@ namespace GalacticBoundStudios.HexTech.MeshGeneration
 {
     public partial struct HexagonMeshGenerator : ISystem
     {
-        
-
         void OnCreate(ref SystemState state)
         {
             // Only run this system when there is a request to generate a mesh
