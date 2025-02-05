@@ -6,16 +6,7 @@ namespace GalacticBoundStudios.RTSCamera
     // Attach me to the target camera object
     public class RTSCameraController : MonoBehaviour
     {
-        // Determines how fast the camera moves horizontally
-        public float movementSpeed = 20f;
-        // Determines how fast the camera rotates
-        public float rotationSpeed = 50f;
-        // Determines how fast the camera rotates when the right mouse button is held
-        public float mouseRotationSpeed = 100f;
-        // Determines how fast the camera zooms in and out
-        public float zoomSpeed = 10f;
-        // Determines how close the cursor has to be to the edge of the screen to trigger edge scrolling
-        public float edgeMoveThreshold = 0.05f;
+        RTSCameraConfig config;
 
         RTSCameraInputActions inputSystem = null;
 
@@ -48,7 +39,7 @@ namespace GalacticBoundStudios.RTSCamera
             right.Normalize();
 
             // Calculate final movement vector
-            Vector3 movement = (forward * move.y + right * move.x) * movementSpeed * Time.deltaTime;
+            Vector3 movement = (forward * move.y + right * move.x) * config.movementSpeed * Time.deltaTime;
             transform.position += movement;
         }
 
@@ -57,12 +48,12 @@ namespace GalacticBoundStudios.RTSCamera
             // Keyboard rotation with Q and E
             float keyboardRotation = inputSystem.HexMap.Rotate.ReadValue<float>();
 
-            transform.Rotate(Vector3.up * keyboardRotation * rotationSpeed * Time.deltaTime, Space.World);
+            transform.Rotate(Vector3.up * keyboardRotation * config.rotationSpeed * Time.deltaTime, Space.World);
 
             // Mouse rotation when right mouse button is held
             if (Mouse.current.rightButton.isPressed)
             {
-                Vector2 mouse_movement = Mouse.current.delta.ReadValue() * mouseRotationSpeed * Time.deltaTime;
+                Vector2 mouse_movement = Mouse.current.delta.ReadValue() * config.mouseRotationSpeed * Time.deltaTime;
 
                 // Horizontal rotation (around world Y axis)
                 transform.Rotate(Vector3.up * mouse_movement.x, Space.World);
@@ -76,7 +67,7 @@ namespace GalacticBoundStudios.RTSCamera
         {
             float zoomInput = inputSystem.HexMap.Zoom.ReadValue<float>();
 
-            transform.position += transform.forward * zoomInput * zoomSpeed * Time.deltaTime;
+            transform.position += transform.forward * zoomInput * config.zoomSpeed * Time.deltaTime;
         }
 
         // Move the camera if the cursor is on the edge of the screen. Will only add horizontal movement
@@ -95,21 +86,21 @@ namespace GalacticBoundStudios.RTSCamera
             Vector3 moveVector = Vector3.zero;
 
             // Left right edge scrolling
-            if (mousePos.x < edgeMoveThreshold)
+            if (mousePos.x < config.edgeMoveThreshold)
             {
                 moveVector.x -= 1;
             }
-            else if (mousePos.x > 1.0f - edgeMoveThreshold)
+            else if (mousePos.x > 1.0f - config.edgeMoveThreshold)
             {
                 moveVector.x += 1;
             }
 
             // Forward and back edge scrolling
-            if (mousePos.y < edgeMoveThreshold)
+            if (mousePos.y < config.edgeMoveThreshold)
             {
                 moveVector.z -= 1;
             }
-            else if (mousePos.y > 1.0f - edgeMoveThreshold)
+            else if (mousePos.y > 1.0f - config.edgeMoveThreshold)
             {
                 moveVector.z += 1;
             }
@@ -118,7 +109,7 @@ namespace GalacticBoundStudios.RTSCamera
             moveVector = Quaternion.Euler(0, transform.eulerAngles.y, 0) * moveVector;
 
             // Move the camera
-            transform.position += moveVector * movementSpeed * Time.deltaTime;
+            transform.position += moveVector * config.movementSpeed * Time.deltaTime;
         }
     }
 }

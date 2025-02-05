@@ -7,9 +7,7 @@ namespace GalacticBoundStudios.RTSCamera
 {
     // Make sure this updates after the input reader system
     [UpdateAfter(typeof(RTSCameraInputReaderSystem))]
-
-
-    // This system is resposible for reading in the player input data and determining the camera's acceleration
+    // This system is responsible for reading in the player input data and determining the camera's acceleration
     public partial struct RTSCameraMovementSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -25,26 +23,29 @@ namespace GalacticBoundStudios.RTSCamera
 
             foreach (var aspect in SystemAPI.Query<RTSCameraAspect>()) {
                 float3 position = aspect.localTransform.ValueRO.Position;
-                quaternion rotation = aspect.localTransform.ValueRO.Rotation;
 
                 // Apply the movement settings to the camera
                 position += aspect.moveData.ValueRO.horizontalMovement * aspect.movementSettings.ValueRO.movementSpeed * deltaTime;
 
-                // Apply the rotation settings to the camera
-                rotation = math.mul(rotation, quaternion.Euler(math.radians(aspect.moveData.ValueRO.rotation * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime)));
-
-                // Clamp the camera's Y rotation
-                float3 euler = math.degrees(math.Euler(rotation));
-                euler.x = math.clamp(euler.x, -89, 89);
-                rotation = quaternion.Euler(math.radians(euler));
-
-                // Update the camera's position and rotation
+                // Apply the zoom settings to the camera
+                position += aspect.localTransform.ValueRW.Forward() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
+                
                 aspect.localTransform.ValueRW.Position = position;
-                aspect.localTransform.ValueRW.Rotation = rotation;
+
+                // Apply rotation around the x-axis
+                aspect.localTransform.ValueRW = aspect.localTransform.ValueRW.Rotate(quaternion.Euler(math.radians(new float3(1, 0, 0)) * aspect.moveData.ValueRO.rotation.x * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
+
+                // Apply rotation around the y-axis
+                aspect.localTransform.ValueRW = aspect.localTransform.ValueRW.Rotate(quaternion.Euler(math.radians(new float3(0, 1, 0)) * aspect.moveData.ValueRO.rotation.y * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
+
+                // Ensure no rotation occurs around the z-axis
+                float3 euler = math.degrees(math.Euler(aspect.localTransform.ValueRW.Rotation));
+                euler.z = 0;
+                aspect.localTransform.ValueRW.Rotation = quaternion.Euler(math.radians(euler));
 
                 // Update the Camera GameObject
                 Camera.main.transform.position = position;
-                Camera.main.transform.rotation = rotation;
+                Camera.main.transform.rotation = aspect.localTransform.ValueRO.Rotation;
             }
         }
     }

@@ -35,14 +35,12 @@ namespace GalacticBoundStudios.RTSCamera
                 moveData.moveData.ValueRW.horizontalMovement = ReadHorizontalMovement(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
                 moveData.moveData.ValueRW.horizontalMovement += ReadEdgeScrolling(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
                 moveData.moveData.ValueRW.zoom = ReadZoom();
-                moveData.moveData.ValueRW.rotation = ReadRotation(moveData.localTransform.ValueRO) + ReadMouseRotation() + ReadEdgeScrolling(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
+                moveData.moveData.ValueRW.rotation = ReadRotation(moveData.localTransform.ValueRO) + ReadMouseRotation();
             }
         }
 
-        float3 ReadHorizontalMovement(in RTSCameraMovementSettings moveSettings, in LocalTransform localTransform)
+        float3 DetermineMoveDirection(in LocalTransform localTransform, in float2 move)
         {
-            float2 move = inputSystem.HexMap.Move.ReadValue<Vector2>();
-
             // Calculate movement direction relative to camera orientation
             float3 forward = localTransform.Forward();
             forward.y = 0; // Flatten the forward vector to horizontal plane
@@ -55,14 +53,68 @@ namespace GalacticBoundStudios.RTSCamera
             // Calculate final movement vector
             float3 movement = forward * move.y + right * move.x;
 
-            return math.normalize(movement);
+            if (math.length(movement) > 1)
+            {
+                movement = math.normalize(movement);
+            }
+
+            return movement;
+        }
+
+        float3 ReadHorizontalMovement(in RTSCameraMovementSettings moveSettings, in LocalTransform localTransform)
+        {
+            float2 move = inputSystem.HexMap.Move.ReadValue<Vector2>();
+
+            return DetermineMoveDirection(localTransform, move);
+        }
+
+        float3 ReadEdgeScrolling(in RTSCameraMovementSettings settings, in LocalTransform localTransform)
+        {
+            // If the player is rotating the camera with the mouse, ignore edge scrolling
+            if (Mouse.current.rightButton.isPressed)
+            {
+                return float3.zero;
+            }
+
+            float2 mousePos = Mouse.current.position.ReadValue();
+
+            mousePos.x /= Screen.width;
+            mousePos.y /= Screen.height;
+
+            float2 moveVector = float2.zero;
+
+            // Left right edge scrolling
+            if (mousePos.x < settings.edgeMoveThreshold)
+            {
+                moveVector.x -= 1;
+            }
+            else if (mousePos.x > 1 - settings.edgeMoveThreshold)
+            {
+                moveVector.x += 1;
+            }
+
+            // Forward and back edge scrolling
+            if (mousePos.y < settings.edgeMoveThreshold)
+            {
+                moveVector.y -= 1;
+            }
+            else if (mousePos.y > 1 - settings.edgeMoveThreshold)
+            {
+                moveVector.y += 1;
+            }
+
+            if (math.length(moveVector) > 0)
+            {
+                moveVector = math.normalize(moveVector);
+                return DetermineMoveDirection(localTransform, moveVector);
+            }
+            
+            return float3.zero;
         }
 
         float3 ReadRotation(in LocalTransform localTransform)
         {
-            float keyboardInput = inputSystem.HexMap.Rotate.ReadValue<float>();
-
-            return localTransform.Up() * keyboardInput;
+            return (new float3(0, 1, 0)) * inputSystem.HexMap.Rotate.ReadValue<float>();
         }
 
         float3 ReadMouseRotation()
@@ -92,53 +144,7 @@ namespace GalacticBoundStudios.RTSCamera
             return inputSystem.HexMap.Zoom.ReadValue<float>();
         }
 
-        float3 ReadEdgeScrolling(in RTSCameraMovementSettings settings, in LocalTransform localTransform)
-        {
-            // If the player is rotating the camera with the mouse, ignore edge scrolling
-            if (Mouse.current.rightButton.isPressed)
-            {
-                return float3.zero;
-            }
-
-            float2 mousePos = Mouse.current.position.ReadValue();
-            mousePos.x /= Screen.width;
-            mousePos.y /= Screen.height;
-
-            float3 moveVector = float3.zero;
-
-            // Left right edge scrolling
-            if (mousePos.x < settings.edgeMoveThreshold)
-            {
-                moveVector.x -= 1;
-            }
-            else if (mousePos.x > 1 - settings.edgeMoveThreshold)
-            {
-                moveVector.x += 1;
-            }
-
-            // Forward and back edge scrolling
-            if (mousePos.y < settings.edgeMoveThreshold)
-            {
-                moveVector.z -= 1;
-            }
-            else if (mousePos.y > 1 - settings.edgeMoveThreshold)
-            {
-                moveVector.z += 1;
-            }
-            
-            float3 forward = localTransform.Forward();
-            forward.y = 0; // Flatten the forward vector to horizontal plane
-            forward = math.normalize(forward);
-
-            float3 right = localTransform.Right();
-            right.y = 0; // Flatten the right vector to horizontal plane
-            right = math.normalize(right);
-
-            // Calculate final movement vector
-            float3 movement = forward * moveVector.z + right * moveVector.x;
-
-            return math.normalize(movement);
-        }
+        
 
 
 

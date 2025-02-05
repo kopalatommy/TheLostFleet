@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 
 namespace GalacticBoundStudios.RTSCamera
 {
-    public class RTSCameraAuthoring : MonoBehaviour
+    [CreateAssetMenu(menuName = "RTSCamera/RTSCameraConfig")]
+    public class RTSCameraConfig : ScriptableObject
     {
         // Determines how fast the camera moves horizontally
         public float movementSpeed = 20f;
@@ -17,6 +18,12 @@ namespace GalacticBoundStudios.RTSCamera
         public float zoomSpeed = 10f;
         // Determines how close the cursor has to be to the edge of the screen to trigger edge scrolling
         public float edgeMoveThreshold = 0.05f;
+    }
+
+    public class RTSCameraAuthoring : MonoBehaviour
+    {
+        [SerializeField]
+        protected RTSCameraConfig config;
 
         protected class Baker : Baker<RTSCameraAuthoring>
         {
@@ -26,11 +33,11 @@ namespace GalacticBoundStudios.RTSCamera
 
                 AddComponent(entity, new RTSCameraMovementSettings
                 {
-                    movementSpeed = authoring.movementSpeed,
-                    rotationSpeed = authoring.rotationSpeed,
-                    mouseRotationSpeed = authoring.mouseRotationSpeed,
-                    zoomSpeed = authoring.zoomSpeed,
-                    edgeMoveThreshold = authoring.edgeMoveThreshold
+                    movementSpeed = authoring.config.movementSpeed,
+                    rotationSpeed = authoring.config.rotationSpeed,
+                    mouseRotationSpeed = authoring.config.mouseRotationSpeed,
+                    zoomSpeed = authoring.config.zoomSpeed,
+                    edgeMoveThreshold = authoring.config.edgeMoveThreshold
                 });
 
                 AddComponent(entity, new RTSCameraMoveData
