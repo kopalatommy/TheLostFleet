@@ -25,6 +25,13 @@ namespace GalacticBoundStudios.RTSCamera
         public float3 rotation;
     }
 
+    // This component defines the bounds for the camera
+    public struct RTSCameraBounds : IComponentData
+    {
+        public float3 minBounds;
+        public float3 maxBounds;
+    }
+
     public readonly partial struct RTSCameraAspect : IAspect
     {
         public readonly Entity entity;

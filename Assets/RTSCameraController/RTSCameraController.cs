@@ -41,6 +41,16 @@ namespace GalacticBoundStudios.RTSCamera
             // Calculate final movement vector
             Vector3 movement = (forward * move.y + right * move.x) * config.movementSpeed * Time.deltaTime;
             transform.position += movement;
+
+            // Clamp the camera's position to the bounds
+            if (config.addBounds)
+            {
+                transform.position = new Vector3(
+                    Mathf.Clamp(transform.position.x, config.minBounds.x, config.maxBounds.x),
+                    Mathf.Clamp(transform.position.y, config.minBounds.y, config.maxBounds.y),
+                    Mathf.Clamp(transform.position.z, config.minBounds.z, config.maxBounds.z)
+                );
+            }
         }
 
         void HandleRotation()

@@ -31,6 +31,14 @@ namespace GalacticBoundStudios.RTSCamera
                 // Apply the zoom settings to the camera
                 position += aspect.localTransform.ValueRW.Up() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
                 
+                // Check if there is bounds data
+                if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity)) {
+                    RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);
+
+                    // Clamp the camera's position to the bounds
+                    position = math.clamp(position, bounds.minBounds, bounds.maxBounds);
+                }
+
                 // Calculate the rotation around the x-axis
                 quaternion xRotation = quaternion.AxisAngle(new float3(1, 0, 0), math.radians(aspect.moveData.ValueRO.rotation.x * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
 

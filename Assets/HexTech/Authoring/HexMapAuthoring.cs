@@ -81,7 +81,7 @@ namespace GalacticBoundStudios.HexTech
                     randomSeed = (uint)System.DateTime.Now.Ticks,
                 };
 
-                PopulateHexGrid(authoring.mapConfig.gridShape, ref gridData);
+                PopulateHexGrid(authoring.mapConfig.gridShape, ref gridData, authoring.mapConfig.chunkSize);
 
                 //DrawHexCoords(in gridData, ref transformData, authoring.hexCoordPrefab, GameObject.Find("HexUI").transform);
 
@@ -123,32 +123,32 @@ namespace GalacticBoundStudios.HexTech
                 Debug.Log("Baked HexMapAuthoring. Number of hexagons: " + gridData.hexGrid.Count);
             }
 
-            private void PopulateHexGrid(HexGridShape gridShape, ref HexagonActivationGrid gridData)
+            private void PopulateHexGrid(HexGridShape gridShape, ref HexagonActivationGrid gridData, int chunkSize)
             {
                 switch (gridShape)
                 {
                     case HexGridShape.Hexagon:
-                        PopulateHexagonGrid(ref gridData);
+                        PopulateHexagonGrid(ref gridData, chunkSize);
                         break;
                     case HexGridShape.Rectangle:
-                        PopulateRectangleGrid(ref gridData);
+                        PopulateRectangleGrid(ref gridData, chunkSize);
                         break;
                     case HexGridShape.Triangle:
-                        PopulateTriangleGrid(ref gridData);
+                        PopulateTriangleGrid(ref gridData, chunkSize);
                         break;
                     case HexGridShape.HexagonRing:
-                        PopulateHexagonRingGrid(ref gridData);
+                        PopulateHexagonRingGrid(ref gridData, chunkSize);
                         break;
                 }
             }
 
-            private void PopulateHexagonGrid(ref HexagonActivationGrid gridData)
+            private void PopulateHexagonGrid(ref HexagonActivationGrid gridData, int chunkSize)
             {
-                for (int q = -5; q <= 5; q++)
+                for (int q = -chunkSize; q <= chunkSize; q++)
                 {
-                    for (int r = -5; r <= 5; r++)
+                    for (int r = -chunkSize; r <= chunkSize; r++)
                     {
-                        if (q + r >= -5 && q + r <= 5)
+                        if (q + r >= -chunkSize && q + r <= chunkSize)
                         {
                             gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
                         }
@@ -156,35 +156,35 @@ namespace GalacticBoundStudios.HexTech
                 }
             }
 
-            private void PopulateRectangleGrid(ref HexagonActivationGrid gridData)
+            private void PopulateRectangleGrid(ref HexagonActivationGrid gridData, int chunkSize)
             {
-                for (int q = -5; q <= 5; q++)
+                for (int q = -chunkSize; q <= chunkSize; q++)
                 {
-                    for (int r = -5; r <= 5; r++)
+                    for (int r = -chunkSize; r <= chunkSize; r++)
                     {
                         gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
                     }
                 }
             }
 
-            private void PopulateTriangleGrid(ref HexagonActivationGrid gridData)
+            private void PopulateTriangleGrid(ref HexagonActivationGrid gridData, int chunkSize)
             {
-                for (int q = 0; q <= 5; q++)
+                for (int q = 0; q <= chunkSize; q++)
                 {
-                    for (int r = 0; r <= 5 - q; r++)
+                    for (int r = 0; r <= chunkSize - q; r++)
                     {
                         gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
                     }
                 }
             }
 
-            private void PopulateHexagonRingGrid(ref HexagonActivationGrid gridData)
+            private void PopulateHexagonRingGrid(ref HexagonActivationGrid gridData, int chunkSize)
             {
-                for (int q = -5; q <= 5; q++)
+                for (int q = -chunkSize; q <= chunkSize; q++)
                 {
-                    for (int r = -5; r <= 5; r++)
+                    for (int r = -chunkSize; r <= chunkSize; r++)
                     {
-                        if (math.abs(q + r) == 5)
+                        if (math.abs(q + r) == chunkSize)
                         {
                             gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
                         }

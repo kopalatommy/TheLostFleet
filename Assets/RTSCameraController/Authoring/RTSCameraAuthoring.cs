@@ -2,9 +2,12 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine.InputSystem;
+using Unity.Entities.UniversalDelegates;
 
 namespace GalacticBoundStudios.RTSCamera
 {
+    // Notes:
+    // 1. There is an option to include bounds for the camera. Often times, this will be set dynamically based on the game world.
     [CreateAssetMenu(menuName = "RTSCamera/RTSCameraConfig")]
     public class RTSCameraConfig : ScriptableObject
     {
@@ -18,6 +21,13 @@ namespace GalacticBoundStudios.RTSCamera
         public float zoomSpeed = 10f;
         // Determines how close the cursor has to be to the edge of the screen to trigger edge scrolling
         public float edgeMoveThreshold = 0.05f;
+
+        // Should the bounding component be added
+        public bool addBounds = false;
+        // Determines the minimum bounds for the camera
+        public float3 minBounds = new float3(-100, 5, -100);
+        // Determines the maximum bounds for the camera
+        public float3 maxBounds = new float3(100, 50, 100);
     }
 
     public class RTSCameraAuthoring : MonoBehaviour
@@ -46,6 +56,15 @@ namespace GalacticBoundStudios.RTSCamera
                     zoom = 0,
                     rotation = float3.zero
                 });
+
+                if (authoring.config.addBounds)
+                {
+                    AddComponent(entity, new RTSCameraBounds
+                    {
+                        minBounds = authoring.config.minBounds,
+                        maxBounds = authoring.config.maxBounds
+                    });
+                }
             }
         }
     }

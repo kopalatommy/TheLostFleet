@@ -18,3 +18,4 @@ MonoBehaviour:
   hollow: 1
   innerRadius: 0.9
   gridShape: 1
+  chunkSize: 20
