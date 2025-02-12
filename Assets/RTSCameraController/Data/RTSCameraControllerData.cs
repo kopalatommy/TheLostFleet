@@ -40,4 +40,10 @@ namespace GalacticBoundStudios.RTSCamera
         public readonly RefRO<RTSCameraMovementSettings> movementSettings;
         public readonly RefRW<RTSCameraMoveData> moveData;
     }
+
+    public struct RTSCameraInitialTransformData : IComponentData
+    {
+        public float3 initialPosition;
+        public quaternion initialRotation;
+    }
 }

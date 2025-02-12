@@ -65,6 +65,12 @@ namespace GalacticBoundStudios.RTSCamera
                         maxBounds = authoring.config.maxBounds
                     });
                 }
+
+                AddComponent(entity, new RTSCameraInitialTransformData
+                {
+                    initialPosition = Camera.main.transform.position,
+                    initialRotation = Camera.main.transform.rotation
+                });
             }
         }
     }

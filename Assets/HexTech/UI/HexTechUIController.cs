@@ -8,15 +8,39 @@ public class HexTechUIController : MonoBehaviour
 {
     [SerializeField]
     protected TMP_Text currentCoordsText;
+    [SerializeField]
+    protected TMP_Text selectedCoordsText;
 
     [SerializeField]
     private Transform mouseMarkerTransform;
+
+    [SerializeField]
+    protected GameObject hexCoordsPrefab;
+    [SerializeField]
+    protected GameObject uiCanvas;
 
     Camera mainCamera;
 
     private void Awake()
     {
         mainCamera = Camera.main;
+
+        InitializeEventListeners();
+        RemoveLingeringCoords();
+    }
+
+    protected void InitializeEventListeners()
+    {
+        HexMapManager.Instance.onCreateHexagon += OnNewHexagon;
+        HexMapManager.Instance.onSelectHexagon += onSelectHexagonAction;
+    }
+
+    void RemoveLingeringCoords()
+    {
+        foreach (Transform child in uiCanvas.transform)
+        {
+            Destroy(child.gameObject);
+        }
     }
 
     protected void Update()
@@ -34,12 +58,7 @@ public class HexTechUIController : MonoBehaviour
 
         Vector3 intersection = DetermineWhereRayIntersectsPlane(ray);
 
-        HexCoord selectedCoord = HexMath.PixelToHex(new Unity.Mathematics.float2(intersection.x, intersection.z), new HexMapTransformData
-        {
-            orientation = HexOrientation.PointyTop(),
-            origin = new float3(0, 0, 0),
-            scale = new float2(1, 1)
-        });
+        HexCoord selectedCoord = HexMath.PixelToHex(new Unity.Mathematics.float2(intersection.x, intersection.z), HexMapManager.Instance.Config.TransformData);
 
         mouseMarkerTransform.position = intersection;
 
@@ -119,5 +138,18 @@ public class HexTechUIController : MonoBehaviour
 
         // Output a ray from camera position, along this direction.
         return new Ray(position, direction);
+    }
+
+    public void OnNewHexagon(HexCoord coord)
+    {
+        float2 pixelCoords = HexMath.HexToPixel(coord, HexMapManager.Instance.Config.TransformData);
+
+        GameObject hexCoords = Instantiate(hexCoordsPrefab, new Vector3(pixelCoords.x, 0, pixelCoords.y), Quaternion.identity, uiCanvas.transform);
+        hexCoords.GetComponentInChildren<TMP_Text>().text = coord.ToString();
+    }
+
+    public void onSelectHexagonAction(HexCoord coord)
+    {
+        selectedCoordsText.text = coord.ToString();
     }
 }

@@ -53,6 +53,24 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Click"",
+                    ""type"": ""Button"",
+                    ""id"": ""d049ffe9-e4d9-4ca8-b3ae-e1ea864c7441"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""CursorPosition"",
+                    ""type"": ""Value"",
+                    ""id"": ""35825823-731b-445e-b4af-871d73338a0a"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -209,6 +227,28 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
                     ""action"": ""Rotate"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""24c3d700-ea14-419c-8bf2-44b2f2091fc0"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Click"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5a95b91b-5ab1-44b7-8189-54cf76921ce3"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CursorPosition"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -220,6 +260,8 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
         m_HexMap_Move = m_HexMap.FindAction("Move", throwIfNotFound: true);
         m_HexMap_Zoom = m_HexMap.FindAction("Zoom", throwIfNotFound: true);
         m_HexMap_Rotate = m_HexMap.FindAction("Rotate", throwIfNotFound: true);
+        m_HexMap_Click = m_HexMap.FindAction("Click", throwIfNotFound: true);
+        m_HexMap_CursorPosition = m_HexMap.FindAction("CursorPosition", throwIfNotFound: true);
     }
 
     ~@RTSCameraInputActions()
@@ -289,6 +331,8 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
     private readonly InputAction m_HexMap_Move;
     private readonly InputAction m_HexMap_Zoom;
     private readonly InputAction m_HexMap_Rotate;
+    private readonly InputAction m_HexMap_Click;
+    private readonly InputAction m_HexMap_CursorPosition;
     public struct HexMapActions
     {
         private @RTSCameraInputActions m_Wrapper;
@@ -296,6 +340,8 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
         public InputAction @Move => m_Wrapper.m_HexMap_Move;
         public InputAction @Zoom => m_Wrapper.m_HexMap_Zoom;
         public InputAction @Rotate => m_Wrapper.m_HexMap_Rotate;
+        public InputAction @Click => m_Wrapper.m_HexMap_Click;
+        public InputAction @CursorPosition => m_Wrapper.m_HexMap_CursorPosition;
         public InputActionMap Get() { return m_Wrapper.m_HexMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -314,6 +360,12 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
             @Rotate.started += instance.OnRotate;
             @Rotate.performed += instance.OnRotate;
             @Rotate.canceled += instance.OnRotate;
+            @Click.started += instance.OnClick;
+            @Click.performed += instance.OnClick;
+            @Click.canceled += instance.OnClick;
+            @CursorPosition.started += instance.OnCursorPosition;
+            @CursorPosition.performed += instance.OnCursorPosition;
+            @CursorPosition.canceled += instance.OnCursorPosition;
         }
 
         private void UnregisterCallbacks(IHexMapActions instance)
@@ -327,6 +379,12 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
             @Rotate.started -= instance.OnRotate;
             @Rotate.performed -= instance.OnRotate;
             @Rotate.canceled -= instance.OnRotate;
+            @Click.started -= instance.OnClick;
+            @Click.performed -= instance.OnClick;
+            @Click.canceled -= instance.OnClick;
+            @CursorPosition.started -= instance.OnCursorPosition;
+            @CursorPosition.performed -= instance.OnCursorPosition;
+            @CursorPosition.canceled -= instance.OnCursorPosition;
         }
 
         public void RemoveCallbacks(IHexMapActions instance)
@@ -349,5 +407,7 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
         void OnMove(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnRotate(InputAction.CallbackContext context);
+        void OnClick(InputAction.CallbackContext context);
+        void OnCursorPosition(InputAction.CallbackContext context);
     }
 }

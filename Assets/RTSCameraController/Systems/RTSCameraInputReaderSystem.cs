@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Transforms;
+using GalacticBoundStudios.HexTech;
 
 namespace GalacticBoundStudios.RTSCamera
 {
@@ -31,6 +32,10 @@ namespace GalacticBoundStudios.RTSCamera
 
         protected override void OnUpdate()
         {
+            if (inputSystem.HexMap.Click.triggered)
+            {
+                HexMapManager.Instance.onSelectHexagon?.Invoke(HexMath.PixelToHex(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), HexMapManager.Instance.Config.TransformData));
+            }
             foreach (var moveData in SystemAPI.Query<RTSCameraAspect>()) {
                 moveData.moveData.ValueRW.horizontalMovement = ReadHorizontalMovement(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
                 moveData.moveData.ValueRW.horizontalMovement += ReadEdgeScrolling(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);

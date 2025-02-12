@@ -10,6 +10,8 @@ public class DrawHexCoords : MonoBehaviour
 {
     [SerializeField]
     private GameObject hexCoordPrefab;
+    [SerializeField]
+    private Transform uiCanvas;
 
     [SerializeField]
     private Transform hexParent;
@@ -45,7 +47,7 @@ public class DrawHexCoords : MonoBehaviour
         {
             float2 worldPos = HexMath.HexToPixel(key, in transformData);
 
-            GameObject locMarker = GameObject.Instantiate(hexCoordPrefab, new Vector3(worldPos.x, 0.1f, worldPos.y), Quaternion.identity, hexParent);
+            GameObject locMarker = GameObject.Instantiate(hexCoordPrefab, new Vector3(worldPos.x, 0.1f, worldPos.y), Quaternion.identity, uiCanvas);
 
             // Get the text mesh pro component from the prefab to write the hex coords
             TMP_Text text = locMarker.GetComponentInChildren<TMP_Text>();

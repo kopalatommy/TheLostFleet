@@ -2,18 +2,45 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using Unity.Collections;
 
 namespace GalacticBoundStudios.RTSCamera
 {
     // Make sure this updates after the input reader system
     [UpdateAfter(typeof(RTSCameraInputReaderSystem))]
     // This system is responsible for reading in the player input data and determining the camera's acceleration
-    public partial struct RTSCameraMovementSystem : ISystem
+    public partial struct RTSCameraMovementSystem : ISystem, ISystemStartStop
     {
         public void OnCreate(ref SystemState state)
         {
             // Only run the system when there is a container to hold the input data
             state.RequireForUpdate<RTSCameraMoveData>();
+        }
+
+        public void OnStartRunning(ref SystemState state)
+        {
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+
+            foreach (var aspect in SystemAPI.Query<RTSCameraAspect>())
+            {
+                if (state.EntityManager.HasComponent<RTSCameraInitialTransformData>(aspect.entity))
+                {
+                    RTSCameraInitialTransformData initialTransformData = state.EntityManager.GetComponentData<RTSCameraInitialTransformData>(aspect.entity);
+
+                    aspect.localTransform.ValueRW.Position = initialTransformData.initialPosition;
+                    aspect.localTransform.ValueRW.Rotation = initialTransformData.initialRotation;
+
+                    ecb.RemoveComponent<RTSCameraInitialTransformData>(aspect.entity);
+                }
+            }
+
+            ecb.Playback(state.EntityManager);
+            ecb.Dispose();
+        }
+
+        public void OnStopRunning(ref SystemState state)
+        {
+
         }
 
         public void OnUpdate(ref SystemState state)
