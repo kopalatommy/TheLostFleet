@@ -71,6 +71,14 @@ namespace GalacticBoundStudios.RTSCamera
                     initialPosition = Camera.main.transform.position,
                     initialRotation = Camera.main.transform.rotation
                 });
+
+                AddComponent(entity, new RTSCameraSettings
+                {
+                    orthographic = Camera.main.orthographic,
+                    fieldOfView = Camera.main.fieldOfView,
+                    aspect = Camera.main.aspect,
+                    orthographicSize = Camera.main.orthographicSize
+                });
             }
         }
     }

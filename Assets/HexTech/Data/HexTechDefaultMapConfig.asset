@@ -17,5 +17,5 @@ MonoBehaviour:
   mapOffset: {x: 0, y: 0, z: 0}
   hollow: 1
   innerRadius: 0.9
+  chunkSize: 30
   gridShape: 1
-  chunkSize: 20

@@ -3,6 +3,7 @@ using TMPro;
 using GalacticBoundStudios.HexTech;
 using Unity.Mathematics;
 using System;
+using Unity.Entities;
 
 public class HexTechUIController : MonoBehaviour
 {
@@ -21,12 +22,16 @@ public class HexTechUIController : MonoBehaviour
 
     Camera mainCamera;
 
+    private EntityManager entityManager;
+
     private void Awake()
     {
         mainCamera = Camera.main;
 
         InitializeEventListeners();
         RemoveLingeringCoords();
+
+        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
     }
 
     protected void InitializeEventListeners()

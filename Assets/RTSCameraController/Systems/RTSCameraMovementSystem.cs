@@ -57,7 +57,7 @@ namespace GalacticBoundStudios.RTSCamera
 
                 // Apply the zoom settings to the camera
                 position += aspect.localTransform.ValueRW.Up() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
-                
+
                 // Check if there is bounds data
                 if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity)) {
                     RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);

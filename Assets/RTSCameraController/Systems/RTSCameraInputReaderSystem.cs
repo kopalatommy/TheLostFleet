@@ -32,16 +32,53 @@ namespace GalacticBoundStudios.RTSCamera
 
         protected override void OnUpdate()
         {
-            if (inputSystem.HexMap.Click.triggered)
-            {
-                HexMapManager.Instance.onSelectHexagon?.Invoke(HexMath.PixelToHex(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), HexMapManager.Instance.Config.TransformData));
-            }
             foreach (var moveData in SystemAPI.Query<RTSCameraAspect>()) {
                 moveData.moveData.ValueRW.horizontalMovement = ReadHorizontalMovement(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
                 moveData.moveData.ValueRW.horizontalMovement += ReadEdgeScrolling(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
                 moveData.moveData.ValueRW.zoom = ReadZoom();
                 moveData.moveData.ValueRW.rotation = ReadRotation(moveData.localTransform.ValueRO) + ReadMouseRotation();
+
+                if (inputSystem.HexMap.Click.triggered)
+                {
+                    if (moveData.cameraSettings.ValueRO.orthographic)
+                    {
+                        Ray ray = CameraUtilities.ScreenPointToRay_Orthographic(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), moveData.cameraSettings.ValueRO.aspect, moveData.localTransform.ValueRO.Position, moveData.localTransform.ValueRO.Rotation, moveData.cameraSettings.ValueRO.orthographicSize, moveData.localTransform.ValueRO.Forward());
+                        float3 intersection = DetermineRayIntersection(ray);
+                        HexMapManager.Instance.onSelectHexagon?.Invoke(HexMath.PixelToHex(new float2(intersection.x, intersection.z), HexMapManager.Instance.Config.TransformData));
+                    }
+                    else
+                    {
+                        Ray ray = CameraUtilities.ScreenPointToRay_Standard(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), moveData.cameraSettings.ValueRO.fieldOfView, moveData.cameraSettings.ValueRO.aspect, moveData.localTransform.ValueRO.Position, moveData.localTransform.ValueRO.Rotation);
+                        float3 intersection = DetermineRayIntersection(ray);
+                        HexMapManager.Instance.onSelectHexagon?.Invoke(HexMath.PixelToHex(new float2(intersection.x, intersection.z), HexMapManager.Instance.Config.TransformData));
+                    }
+                }
             }
+        }
+
+        public float3 DetermineRayIntersection(in Ray ray)
+        {
+            float intersection = CalculateIntersection(ray.origin, ray.direction, Vector3.zero, Vector3.up);
+
+            if (float.IsNaN(intersection))
+            {
+                return Vector3.zero;
+            }
+            return ray.origin + (ray.direction * intersection);
+        }
+
+        public float CalculateIntersection(Vector3 rayOrigin, Vector3 rayDirection, Vector3 planePoint, Vector3 planeNormal)
+        {
+            float denominator = Vector3.Dot(planeNormal, rayDirection);
+            // Make sure the ray is not parallel to the plane
+            if (Mathf.Abs(denominator) < 1e-6)
+            {
+                return float.NaN;
+            }
+
+            Vector3 difference = planePoint - rayOrigin;
+            float t = Vector3.Dot(difference, planeNormal) / denominator;
+            return t;
         }
 
         float3 DetermineMoveDirection(in LocalTransform localTransform, in float2 move)
