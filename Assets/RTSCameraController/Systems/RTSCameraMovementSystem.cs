@@ -89,8 +89,6 @@ namespace GalacticBoundStudios.RTSCamera
 
                     // Clamp the camera's position to the bounds
                     euler.x = math.clamp(euler.x, bounds.rotationBounds.x, bounds.rotationBounds.y);
-
-                    Debug.Log(euler.x);
                 }
 
                 rotation = quaternion.Euler(math.radians(euler));

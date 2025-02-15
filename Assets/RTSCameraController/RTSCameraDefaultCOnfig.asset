@@ -10,10 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: RTSCameraDefaultCOnfig
+  m_Name: RTSCameraDefaultConfig
   m_EditorClassIdentifier: Assembly-CSharp:GalacticBoundStudios.RTSCamera:RTSCameraConfig
   movementSpeed: 20
   rotationSpeed: 50
   mouseRotationSpeed: 100
   zoomSpeed: 10
   edgeMoveThreshold: 0.05
+  addBounds: 1
+  minBounds:
+    x: -100
+    y: 5
+    z: -100
+  maxBounds:
+    x: 100
+    y: 50
+    z: 100
+  rotationBounds:
+    x: -88
+    y: 88
