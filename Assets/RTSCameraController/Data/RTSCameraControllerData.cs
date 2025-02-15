@@ -30,6 +30,8 @@ namespace GalacticBoundStudios.RTSCamera
     {
         public float3 minBounds;
         public float3 maxBounds;
+
+        public float2 rotationBounds;
     }
 
     public readonly partial struct RTSCameraAspect : IAspect

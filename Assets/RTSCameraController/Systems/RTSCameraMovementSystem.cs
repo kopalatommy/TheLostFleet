@@ -56,7 +56,7 @@ namespace GalacticBoundStudios.RTSCamera
                 position += aspect.moveData.ValueRO.horizontalMovement * aspect.movementSettings.ValueRO.movementSpeed * deltaTime;
 
                 // Apply the zoom settings to the camera
-                position += aspect.localTransform.ValueRW.Up() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
+                position += aspect.localTransform.ValueRW.Forward() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
 
                 // Check if there is bounds data
                 if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity)) {
@@ -81,6 +81,18 @@ namespace GalacticBoundStudios.RTSCamera
                 // Ensure no rotation occurs around the z-axis
                 float3 euler = math.degrees(math.Euler(rotation));
                 euler.z = 0;
+
+                // Apply bounds to the rotation around the x-axis
+                // Check if there is bounds data
+                if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity)) {
+                    RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);
+
+                    // Clamp the camera's position to the bounds
+                    euler.x = math.clamp(euler.x, bounds.rotationBounds.x, bounds.rotationBounds.y);
+
+                    Debug.Log(euler.x);
+                }
+
                 rotation = quaternion.Euler(math.radians(euler));
 
                 // Update the camera's position and rotation
