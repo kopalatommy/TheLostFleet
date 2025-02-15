@@ -26,6 +26,8 @@ namespace GalacticBoundStudios.RTSCamera
         public float3 minBounds = new float3(-100, 5, -100);
         // Determines the maximum bounds for the camera
         public float3 maxBounds = new float3(100, 50, 100);
+        // Determines the rotation bounds for the camera
+        public float2 rotationBounds = new float2(-88, 88);
     }
 
     public class RTSCameraAuthoring : MonoBehaviour
@@ -60,7 +62,8 @@ namespace GalacticBoundStudios.RTSCamera
                     AddComponent(entity, new RTSCameraBounds
                     {
                         minBounds = authoring.config.minBounds,
-                        maxBounds = authoring.config.maxBounds
+                        maxBounds = authoring.config.maxBounds,
+                        rotationBounds = authoring.config.rotationBounds
                     });
                 }
 
