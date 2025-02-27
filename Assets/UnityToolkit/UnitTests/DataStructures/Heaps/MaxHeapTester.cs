@@ -1,5 +1,5 @@
-using ProjectWorlds.DataStructures.Lists;
-using ProjectWorlds.DataStructures.Heaps;
+using GalacticBoundStudios.DataScribes.Managed.Lists;
+using GalacticBoundStudios.DataScribes.Managed.Heaps;
 using ProjectWorlds.Testing;
 
 namespace ProjectWorlds.UnitTests

@@ -1,5 +1,5 @@
-using ProjectWorlds.DataStructures.Lists;
-using ProjectWorlds.DataStructures.Trees;
+using GalacticBoundStudios.DataScribes.Managed.Lists;
+using GalacticBoundStudios.DataScribes.Managed.Trees;
 using ProjectWorlds.Testing;
 using System.Collections.Generic;
 

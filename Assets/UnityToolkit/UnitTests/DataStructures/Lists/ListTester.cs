@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using ProjectWorlds.DataStructures.Lists;
+using GalacticBoundStudios.DataScribes.Managed.Lists;
 using ProjectWorlds.Testing;
 
 namespace ProjectWorlds.UnitTests

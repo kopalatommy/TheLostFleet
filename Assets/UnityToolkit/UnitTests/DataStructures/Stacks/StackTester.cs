@@ -1,10 +1,10 @@
 using ProjectWorlds.Testing;
-using ProjectWorlds.DataStructures.Stacks;
+using GalacticBoundStudios.DataScribes.Managed.Stacks;
 using System;
 
 namespace ProjectWorlds.UnitTests
 {
-    public class StackTester<T> : TesterBase where T : ProjectWorlds.DataStructures.Stacks.Stack<int>, new()
+    public class StackTester<T> : TesterBase where T : GalacticBoundStudios.DataScribes.Managed.Stacks.Stack<int>, new()
     {
         public StackTester(string testerName, string resultsDir=null, bool verbose = false) : base(testerName, resultsDir, verbose)
         {

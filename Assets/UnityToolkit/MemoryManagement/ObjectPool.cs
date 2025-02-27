@@ -1,5 +1,5 @@
 using System;
-using ProjectWorlds.DataStructures.Stacks;
+using GalacticBoundStudios.DataScribes.Managed.Stacks;
 
 namespace ProjectWorlds.MemoryManagement
 {
@@ -43,7 +43,7 @@ namespace ProjectWorlds.MemoryManagement
 
         private CreateObjectDelegate createObjectFunct = null;
 
-        private readonly ProjectWorlds.DataStructures.Stacks.Stack<T> pool;
+        private readonly Stack<T> pool;
 
         private bool isFixedSize;
 
@@ -53,14 +53,14 @@ namespace ProjectWorlds.MemoryManagement
 
         public ObjectPool()
         {
-            pool = new ProjectWorlds.DataStructures.Stacks.Stack<T>();
+            pool = new Stack<T>();
             isFixedSize = false;
             this.createObjectFunct = DefaultCreateObject;
         }
 
         public ObjectPool(int size)
         {
-            pool = new ProjectWorlds.DataStructures.Stacks.Stack<T>(size);
+            pool = new Stack<T>(size);
             isFixedSize = true;
             this.createObjectFunct = DefaultCreateObject;
             capacity = size;

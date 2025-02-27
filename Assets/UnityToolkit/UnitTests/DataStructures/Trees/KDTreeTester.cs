@@ -1,5 +1,5 @@
-using ProjectWorlds.DataStructures.Lists;
-using ProjectWorlds.DataStructures.Trees;
+using GalacticBoundStudios.DataScribes.Managed.Lists;
+using GalacticBoundStudios.DataScribes.Managed.Trees;
 using ProjectWorlds.Testing;
 using System.Collections.Generic;
 
@@ -202,7 +202,6 @@ namespace ProjectWorlds.UnitTests
                         return false;
                     }
                 }
-
 
                 if (!tree.ContainsPoint(new double[] { i, i, i }))
                 {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using ProjectWorlds.DataStructures.Trees;
+using GalacticBoundStudios.DataScribes.Managed.Lists;
+using GalacticBoundStudios.DataScribes.Managed.Trees;
 using ProjectWorlds.Testing;
 
 namespace ProjectWorlds.UnitTests
@@ -440,7 +441,7 @@ namespace ProjectWorlds.UnitTests
                 tree.Add(i);
             }
 
-            System.Collections.Generic.ICollection<int> collection = new ProjectWorlds.DataStructures.Lists.ArrayList<int>(100);
+            System.Collections.Generic.ICollection<int> collection = new ArrayList<int>(100);
             tree.ToCollection(ref collection);
 
             if (collection.Count != 100)

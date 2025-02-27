@@ -1,5 +1,5 @@
-using ProjectWorlds.DataStructures.Lists;
-using ProjectWorlds.DataStructures.Queues;
+using GalacticBoundStudios.DataScribes.Managed.Lists;
+using GalacticBoundStudios.DataScribes.Managed.Queues;
 using System;
 using System.IO;
 using System.Reflection;
@@ -50,7 +50,7 @@ namespace ProjectWorlds.Testing
         bool verbose = false;
 
         // Queue of tests to run, todo make queue data structure
-        ProjectWorlds.DataStructures.Queues.Queue<UnitTest>? testQueue = null;
+        GalacticBoundStudios.DataScribes.Managed.Queues.Queue<UnitTest>? testQueue = null;
 
         // Collection of all active test threads
         ArrayList<Thread>? testThreads = null;
@@ -102,7 +102,7 @@ namespace ProjectWorlds.Testing
             }
     
             // Create the test queue
-            testQueue = new ProjectWorlds.DataStructures.Queues.Queue<UnitTest>();
+            testQueue = new GalacticBoundStudios.DataScribes.Managed.Queues.Queue<UnitTest>();
             GatherTests(testQueue);
 
             StartWorkerThreads(numThreads);
@@ -162,14 +162,14 @@ namespace ProjectWorlds.Testing
             }
         }
 
-        public DataStructures.Queues.Queue<UnitTest> GetTests()
+        public GalacticBoundStudios.DataScribes.Managed.Queues.Queue<UnitTest> GetTests()
         {
-            DataStructures.Queues.Queue<UnitTest> queue = new DataStructures.Queues.Queue<UnitTest>();
+            GalacticBoundStudios.DataScribes.Managed.Queues.Queue<UnitTest> queue = new GalacticBoundStudios.DataScribes.Managed.Queues.Queue<UnitTest>();
             GatherTests(queue);
             return queue;
         }
 
-        protected void GatherTests(DataStructures.Queues.Queue<UnitTest> testQueue)
+        protected void GatherTests(GalacticBoundStudios.DataScribes.Managed.Queues.Queue<UnitTest> testQueue)
         {
             // Get the type of the class that is inheriting from this class
             Type testType = TestType;

@@ -1,4 +1,4 @@
-using ProjectWorlds.DataStructures.Trees;
+using GalacticBoundStudios.DataScribes.Managed.Trees;
 using ProjectWorlds.Testing;
 
 namespace ProjectWorlds.UnitTests
