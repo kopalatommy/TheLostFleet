@@ -41,7 +41,10 @@ public class UnitTester : MonoBehaviour
         MaxHeapTester maxHeapTester = new MaxHeapTester("Max Heap Tester", logDir);
         PermutationNoiseTester<LinearCongruentGenerator> linearCongruentTester = new PermutationNoiseTester<LinearCongruentGenerator>("Permutation Noise Tester", logDir);
         PermutationNoiseTester<MersenneTwister> mersenneTwisterTester = new PermutationNoiseTester<MersenneTwister>("Permutation Noise Tester", logDir);
-        KDTree_Array_Tester kdTree_Array_Tester = new KDTree_Array_Tester("KD Tree Array Tester", logDir);
+        // KDTree_Array_Tester kdTree_Array_Tester = new KDTree_Array_Tester("KD Tree Array Tester", logDir);
+        NativeMaxHeapTester nativeMaxHeapTester = new NativeMaxHeapTester("Native Max Heap Tester", logDir);
+        NativeMinHeapTester nativeMinHeapTester = new NativeMinHeapTester("Native Min Heap Tester", logDir);
+        NativeKDTreeTester nativeKDTreeTester = new NativeKDTreeTester("Native KD Tree Tester", logDir);
 
         // unsafeArrayListTester.StartTests(8);
         // unsafeCircularListTester.StartTests(8);
@@ -66,7 +69,10 @@ public class UnitTester : MonoBehaviour
         // mersenneTwisterTester.StartTests(8);
         //kdTree_Array_Tester.StartTests(8);
 
-        kdTreeTester.StartTests(8);
+        // kdTreeTester.StartTests(8);
+        // nativeMaxHeapTester.StartTests(8);
+        // nativeMinHeapTester.StartTests(8);
+        nativeKDTreeTester.StartTests(1);
     }
 }
 

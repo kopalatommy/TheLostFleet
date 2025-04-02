@@ -23,4 +23,15 @@ namespace GalacticBoundStudios.HexTech.PathFinding
         // The cost to move to this tile
         public int moveCost;
     }
+
+    public readonly partial struct HexTechPathfindingEntity : IAspect
+    {
+        // The entity
+        public readonly Entity entity;
+
+        // The entity's position in the grid
+        public readonly RefRO<HexTechEntityFlag> entityFlag;
+        // The entity's movement settings
+        public readonly RefRO<HexTechMovementSettings> movementSettings;
+    }
 }

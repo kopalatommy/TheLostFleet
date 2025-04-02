@@ -1,6 +1,7 @@
 using GalacticBoundStudios.DataScribes.Managed.Lists;
 using GalacticBoundStudios.DataScribes.Managed.Queues;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
@@ -260,10 +261,11 @@ namespace ProjectWorlds.Testing
                 testThread.Start();
 
                 // Wait for the test to finish or timeout
+                Stopwatch stopwatch = Stopwatch.StartNew();
                 if (!testThread.Join(test.timeoutTime_ms)) {
-                    // testThread.Abort();
+                    stopwatch.Stop();
                     testThread.Interrupt();
-                    Log("Test: " + testerName + "::" + test.testMethod.Name + " with args: " + test.testArgs + " timed out");
+                    Log("Test: " + testerName + "::" + test.testMethod.Name + " with args: " + test.testArgs + " timed out. Elapsed time: " + stopwatch.ElapsedMilliseconds);
                     resultsMap[test] = TestResults.TIMEOUT;
                     // Failed to exit in time, mark as timeout
                     timeMap[test] = -1;
@@ -302,6 +304,7 @@ namespace ProjectWorlds.Testing
             {
                 Log("Error running test: " + testerName + "::" + unitTest.testMethod.Name + " with args: " + e);
                 Log("Error: " + e.Message);
+                Log("Stack Trace: " + e.StackTrace);
                 lock (resultsMap) {
                     resultsMap[unitTest] = TestResults.CRASH;
                     timeMap[unitTest] = -1;

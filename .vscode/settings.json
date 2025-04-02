@@ -1,4 +1,7 @@
 {
     "dotnet.preferCSharpExtension": true,
-    "dotnet.defaultSolution": "HexagonLibrary.sln"
+    "dotnet.defaultSolution": "HexagonLibrary.sln",
+    "cSpell.words": [
+        "Behaviour"
+    ]
 }

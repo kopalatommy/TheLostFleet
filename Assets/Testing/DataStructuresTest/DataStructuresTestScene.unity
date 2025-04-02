@@ -269,7 +269,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1346356118}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82db974a54532fa4ba17763694c6bcef, type: 3}
   m_Name: 
@@ -281,15 +281,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1346356118}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 133e21370b99cee45908517c81a56edd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 20
-  numPoints: 10000
-  useStandardKDTree: 1
-  queryType: 0
 --- !u!1 &1659541000
 GameObject:
   m_ObjectHideFlags: 0
