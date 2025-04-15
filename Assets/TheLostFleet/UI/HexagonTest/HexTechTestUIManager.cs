@@ -6,6 +6,7 @@ using Unity.Entities;
 using GalacticBoundStudios.RTSCamera;
 using Unity.Collections;
 using Unity.Transforms;
+using UnityEngine.UI;
 
 namespace GalacticBoundStudios.TheLostFleet
 {
@@ -16,6 +17,12 @@ namespace GalacticBoundStudios.TheLostFleet
         protected TMP_Text currentCoordsText;
         [SerializeField]
         protected TMP_Text selectedCoordsText;
+        [SerializeField]
+        protected TMP_Text startCoordsText;
+        [SerializeField]
+        protected TMP_Text endCoordsText;
+        [SerializeField]
+        protected Button startPathfinderButton;
 
         [Header("Object References")]
         [SerializeField]
@@ -30,12 +37,19 @@ namespace GalacticBoundStudios.TheLostFleet
         private EntityManager entityManager;
         private EntityQuery cameraQuery;
 
+        // For path finding
+        protected HexCoord currentPos;
+        protected HexCoord pathStartPos;
+        protected HexCoord pathEndPos;
+
         void Awake()
         {
             RemoveLingeringCoords();
             
             entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             cameraQuery = entityManager.CreateEntityQuery(typeof(RTSCameraTag));
+        
+            startPathfinderButton.onClick.AddListener(onStartPathfinderClicked);
         
             InitializeEventListeners();
         }
@@ -73,6 +87,10 @@ namespace GalacticBoundStudios.TheLostFleet
         {
             HexMapManager.Instance.onCreateHexagon += OnNewHexagon;
             HexMapManager.Instance.onSelectHexagon += onSelectHexagonAction;
+
+            HexMapManager.Instance.setPathStartPos += SetPathStartPos;
+            HexMapManager.Instance.setPathEndPos += SetPathEndPos;
+            HexMapManager.Instance.startPathFinder += onStartPathfinderClicked;
         }
 
         void RemoveLingeringCoords()
@@ -93,7 +111,26 @@ namespace GalacticBoundStudios.TheLostFleet
 
         public void onSelectHexagonAction(HexCoord coord)
         {
+            currentPos = coord;
             selectedCoordsText.text = coord.ToString();
+        }
+
+        public void onStartPathfinderClicked()
+        {
+            Debug.Log("Creating pathfinder request");
+
+            Debug.Log("Create path from " + pathStartPos + " to " + pathEndPos);
+        }
+
+        public void SetPathStartPos(HexCoord startPos)
+        {
+            pathStartPos = startPos;
+            startCoordsText.text = "Start: " + startPos;
+        }
+        public void SetPathEndPos(HexCoord endPos)
+        {
+            pathEndPos = endPos;
+            endCoordsText.text = "End: " + endPos;
         }
     }
 }

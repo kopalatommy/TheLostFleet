@@ -23,6 +23,10 @@ namespace GalacticBoundStudios.HexTech
         // This action is triggered when a hexagon is selected
         public Action<HexCoord> onSelectHexagon;
 
+        public Action<HexCoord> setPathStartPos;
+        public Action<HexCoord> setPathEndPos;
+        public Action startPathFinder;
+
         #endregion // Events
 
         protected HexCoord selectedHexagon = new HexCoord(0, 0);

@@ -1,4 +1,5 @@
 using GalacticBoundStudios.DataScribes;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace GalacticBoundStudios.HexTech
@@ -84,6 +85,20 @@ namespace GalacticBoundStudios.HexTech
         public static HexCoord Neighbor(HexCoord hex, int direction)
         {
             return Add(hex, Direction(direction));
+        }
+
+        public static NativeArray<HexCoord> Neighbors(HexCoord coord)
+        {
+            NativeArray<HexCoord> neighbors = new NativeArray<HexCoord>(6, Allocator.TempJob);
+
+            neighbors[0] = new HexCoord(coord.q + 1, coord.r + 0);
+            neighbors[1] = new HexCoord(coord.q + 1, coord.r + -1);
+            neighbors[2] = new HexCoord(coord.q + 0, coord.r + -1);
+            neighbors[3] = new HexCoord(coord.q + -1, coord.r + 0);
+            neighbors[4] = new HexCoord(coord.q + -1, coord.r + 1);
+            neighbors[5] = new HexCoord(coord.q + 0, coord.r + 1);
+
+            return neighbors;
         }
 
         #endregion // Neighbors

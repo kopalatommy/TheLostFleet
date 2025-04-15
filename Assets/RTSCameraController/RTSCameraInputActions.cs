@@ -80,6 +80,33 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""SetPathStart"",
+                    ""type"": ""Button"",
+                    ""id"": ""ee7e6eb1-7e4d-4854-b152-bc7ba6161c1e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SetPathEnd"",
+                    ""type"": ""Button"",
+                    ""id"": ""75527b72-22b2-48b6-b6cd-4e7fb3bb000a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""StartPathFinding"",
+                    ""type"": ""Button"",
+                    ""id"": ""ea4f922f-7d6b-40d8-be45-a2d38f5b26d7"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -269,6 +296,39 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
                     ""action"": ""CursorPosition"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0256ceff-6552-40ea-84df-fae00b0cb1c5"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SetPathStart"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""83feb3c6-5912-4c38-b202-b5aea8b6caf4"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SetPathEnd"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""de379f69-0c07-4fc3-b03b-dc4377df81e7"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""StartPathFinding"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -283,6 +343,9 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
         m_HexMap_Click = m_HexMap.FindAction("Click", throwIfNotFound: true);
         m_HexMap_AltClick = m_HexMap.FindAction("AltClick", throwIfNotFound: true);
         m_HexMap_CursorPosition = m_HexMap.FindAction("CursorPosition", throwIfNotFound: true);
+        m_HexMap_SetPathStart = m_HexMap.FindAction("SetPathStart", throwIfNotFound: true);
+        m_HexMap_SetPathEnd = m_HexMap.FindAction("SetPathEnd", throwIfNotFound: true);
+        m_HexMap_StartPathFinding = m_HexMap.FindAction("StartPathFinding", throwIfNotFound: true);
     }
 
     ~@RTSCameraInputActions()
@@ -355,6 +418,9 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
     private readonly InputAction m_HexMap_Click;
     private readonly InputAction m_HexMap_AltClick;
     private readonly InputAction m_HexMap_CursorPosition;
+    private readonly InputAction m_HexMap_SetPathStart;
+    private readonly InputAction m_HexMap_SetPathEnd;
+    private readonly InputAction m_HexMap_StartPathFinding;
     public struct HexMapActions
     {
         private @RTSCameraInputActions m_Wrapper;
@@ -365,6 +431,9 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
         public InputAction @Click => m_Wrapper.m_HexMap_Click;
         public InputAction @AltClick => m_Wrapper.m_HexMap_AltClick;
         public InputAction @CursorPosition => m_Wrapper.m_HexMap_CursorPosition;
+        public InputAction @SetPathStart => m_Wrapper.m_HexMap_SetPathStart;
+        public InputAction @SetPathEnd => m_Wrapper.m_HexMap_SetPathEnd;
+        public InputAction @StartPathFinding => m_Wrapper.m_HexMap_StartPathFinding;
         public InputActionMap Get() { return m_Wrapper.m_HexMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -392,6 +461,15 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
             @CursorPosition.started += instance.OnCursorPosition;
             @CursorPosition.performed += instance.OnCursorPosition;
             @CursorPosition.canceled += instance.OnCursorPosition;
+            @SetPathStart.started += instance.OnSetPathStart;
+            @SetPathStart.performed += instance.OnSetPathStart;
+            @SetPathStart.canceled += instance.OnSetPathStart;
+            @SetPathEnd.started += instance.OnSetPathEnd;
+            @SetPathEnd.performed += instance.OnSetPathEnd;
+            @SetPathEnd.canceled += instance.OnSetPathEnd;
+            @StartPathFinding.started += instance.OnStartPathFinding;
+            @StartPathFinding.performed += instance.OnStartPathFinding;
+            @StartPathFinding.canceled += instance.OnStartPathFinding;
         }
 
         private void UnregisterCallbacks(IHexMapActions instance)
@@ -414,6 +492,15 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
             @CursorPosition.started -= instance.OnCursorPosition;
             @CursorPosition.performed -= instance.OnCursorPosition;
             @CursorPosition.canceled -= instance.OnCursorPosition;
+            @SetPathStart.started -= instance.OnSetPathStart;
+            @SetPathStart.performed -= instance.OnSetPathStart;
+            @SetPathStart.canceled -= instance.OnSetPathStart;
+            @SetPathEnd.started -= instance.OnSetPathEnd;
+            @SetPathEnd.performed -= instance.OnSetPathEnd;
+            @SetPathEnd.canceled -= instance.OnSetPathEnd;
+            @StartPathFinding.started -= instance.OnStartPathFinding;
+            @StartPathFinding.performed -= instance.OnStartPathFinding;
+            @StartPathFinding.canceled -= instance.OnStartPathFinding;
         }
 
         public void RemoveCallbacks(IHexMapActions instance)
@@ -439,5 +526,8 @@ public partial class @RTSCameraInputActions: IInputActionCollection2, IDisposabl
         void OnClick(InputAction.CallbackContext context);
         void OnAltClick(InputAction.CallbackContext context);
         void OnCursorPosition(InputAction.CallbackContext context);
+        void OnSetPathStart(InputAction.CallbackContext context);
+        void OnSetPathEnd(InputAction.CallbackContext context);
+        void OnStartPathFinding(InputAction.CallbackContext context);
     }
 }

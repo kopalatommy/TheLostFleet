@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -22,6 +23,18 @@ namespace GalacticBoundStudios.HexTech.PathFinding
     {
         // The cost to move to this tile
         public int moveCost;
+    }
+
+    public struct HexTechCreatePathRequest : IComponentData
+    {
+        public HexCoord startPos;
+        public HexCoord endPos;
+        public Entity entity;
+    }
+
+    public struct HexTechPathData : IComponentData
+    {
+        public NativeList<HexCoord> path;
     }
 
     public readonly partial struct HexTechPathfindingEntity : IAspect
