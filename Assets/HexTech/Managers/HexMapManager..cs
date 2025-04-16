@@ -1,4 +1,5 @@
 using System;
+using GalacticBoundStudios.HexTech.MapGeneration;
 using UnityEngine;
 
 namespace GalacticBoundStudios.HexTech

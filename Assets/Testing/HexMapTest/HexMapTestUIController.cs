@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using Unity.Entities;
 using GalacticBoundStudios.HexTech;
 using Unity.Mathematics;
+using GalacticBoundStudios.HexTech.MapGeneration;
 
 namespace GalacticBoundStudios.Testing
 {

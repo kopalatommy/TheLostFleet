@@ -1,4 +1,5 @@
 using GalacticBoundStudios.DataScribes;
+using GalacticBoundStudios.HexTech.MapGeneration;
 using Unity.Collections;
 using Unity.Mathematics;
 
