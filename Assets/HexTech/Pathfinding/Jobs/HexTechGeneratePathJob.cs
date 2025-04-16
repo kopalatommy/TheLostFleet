@@ -7,23 +7,6 @@ using Unity.Jobs;
 
 namespace GalacticBoundStudios.HexTech.PathFinding
 {
-    [BurstCompile]
-    public struct GeneratePathJob : IJobChunk
-    {
-        public EntityCommandBuffer.ParallelWriter commandBuffer;
-        public ComponentTypeHandle<HexTechCreatePathRequest> HexTechCreatePathRequestTypeHandle;
-
-        public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
-        {
-            var requests = chunk.GetNativeArray(HexTechCreatePathRequestTypeHandle);
-        }
-
-        public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-
     // Uses A* algorithm to calculate the path between 2 points
     [BurstCompile]
     public struct HexTechGeneratePathJob : IJobParallelFor
@@ -40,8 +23,8 @@ namespace GalacticBoundStudios.HexTech.PathFinding
         }
 
         // This is how we know if a tile is walkable
-        [ReadOnly]
-        public NativeHashMap<HexCoord, HexTechWalkable> moveData;
+        // [ReadOnly]
+        // public NativeHashMap<HexCoord, HexTechWalkable> moveData;
         [ReadOnly]
         public NativeArray<HexTechCreatePathRequest> requests;
 
@@ -55,15 +38,15 @@ namespace GalacticBoundStudios.HexTech.PathFinding
 
         public void Execute(int reqIndex)
         {
-            buildQueue = new NativePriorityQueue<PathStep>(Allocator.TempJob);
+            // buildQueue = new NativePriorityQueue<PathStep>(Allocator.TempJob);
 
-            ecb.AddComponent(requests[reqIndex].entity, new HexTechPathData()
-            {
-                path = ProcessRequest(requests[reqIndex])
-            });
+            // ecb.AddComponent(requests[reqIndex].entity, new HexTechPathData()
+            // {
+            //     path = ProcessRequest(requests[reqIndex])
+            // });
 
-            buildQueue.Dispose();
-            pathSteps.Dispose();
+            // buildQueue.Dispose();
+            // pathSteps.Dispose();
         }
 
         private NativeList<HexCoord> ProcessRequest(in HexTechCreatePathRequest req)

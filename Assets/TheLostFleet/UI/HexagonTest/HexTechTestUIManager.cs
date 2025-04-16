@@ -54,6 +54,11 @@ namespace GalacticBoundStudios.TheLostFleet
             InitializeEventListeners();
         }
 
+        private void OnDisable()
+        {
+            RemoveLingeringCoords();
+        }
+
         void Update()
         {
             NativeArray<Entity> cameraEntities = cameraQuery.ToEntityArray(Allocator.TempJob);
