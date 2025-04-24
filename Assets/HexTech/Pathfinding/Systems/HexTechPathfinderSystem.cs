@@ -13,12 +13,18 @@ namespace GalacticBoundStudios.HexTech.PathFinding
 
         void OnUpdate(ref SystemState state)
         {
-            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.TempJob);
-            
-            HexTechGeneratePathJob job = new HexTechGeneratePathJob()
-            {
+            UnityEngine.Debug.Log("HexTechPathfinderSystem.Update");
 
+            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.TempJob);
+            EntityCommandBuffer.ParallelWriter parallelWriter = entityCommandBuffer.AsParallelWriter();
+
+            HexTechCreatePathJob job = new HexTechCreatePathJob()
+            {
+                entityCommandBuffer = parallelWriter,
+                costMap = HexMapManager.Instance.mapCostData
             };
+
+            state.Dependency = job.ScheduleParallel(state.Dependency);
 
             entityCommandBuffer.Playback(state.EntityManager);
             entityCommandBuffer.Dispose();

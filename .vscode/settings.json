@@ -2,6 +2,7 @@
     "dotnet.preferCSharpExtension": true,
     "dotnet.defaultSolution": "HexagonLibrary.sln",
     "cSpell.words": [
-        "Behaviour"
+        "Behaviour",
+        "Scriptable"
     ]
 }

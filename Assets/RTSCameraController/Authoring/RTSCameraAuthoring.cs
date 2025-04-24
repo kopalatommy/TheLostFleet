@@ -39,7 +39,13 @@ namespace GalacticBoundStudios.RTSCamera
         {
             public override void Bake(RTSCameraAuthoring authoring)
             {
+                Debug.Log("Baker<RTSCameraAuthoring>.Baker");
+
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+
+                Debug.Log("RTSCameraAuthoring authoring: " + authoring);
+                Debug.Log("RTSCameraAuthoring authoring.config: " + authoring.config);
+                Debug.Log("RTSCameraAuthoring authoring.config.movementSpeed: " + authoring.config.movementSpeed);
 
                 AddComponent(entity, new RTSCameraMovementSettings
                 {

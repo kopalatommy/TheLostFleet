@@ -1,5 +1,6 @@
 using System;
 using GalacticBoundStudios.HexTech.MapGeneration;
+using Unity.Collections;
 using UnityEngine;
 
 namespace GalacticBoundStudios.HexTech
@@ -30,31 +31,50 @@ namespace GalacticBoundStudios.HexTech
 
         #endregion // Events
 
+        #region Map Data
+
+        public NativeHashMap<HexCoord, float> mapCostData;
+
+        #endregion // Map Data
+
         protected HexCoord selectedHexagon = new HexCoord(0, 0);
 
         private void Awake()
         {
-            if (Instance == null)
-            {
-                Instance = this;
-
-                SetUpEventListeners();
-            }
-            else
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
-                return;
             }
+
+            Debug.Log("HexMapManager.Awake");
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            mapCostData = new NativeHashMap<HexCoord, float>(128, Allocator.Persistent);
+
+            SetUpEventListeners();
+        }
+
+        private void Destroy()
+        {
+            mapCostData.Dispose();
         }
 
         private void SetUpEventListeners()
         {
             onSelectHexagon += onSelectHexagonAction;
+            onCreateHexagon += OnCreateNewCoord;
         }
 
         private void onSelectHexagonAction(HexCoord coord)
         {
             selectedHexagon = coord;
+        }
+
+        private void OnCreateNewCoord(HexCoord coord)
+        {
+            mapCostData.Add(coord, 0);
         }
     }
 }

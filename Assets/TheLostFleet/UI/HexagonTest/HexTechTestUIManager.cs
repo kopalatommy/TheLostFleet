@@ -7,6 +7,9 @@ using GalacticBoundStudios.RTSCamera;
 using Unity.Collections;
 using Unity.Transforms;
 using UnityEngine.UI;
+using GalacticBoundStudios.HexTech.MapGeneration;
+using GalacticBoundStudios.Utilities;
+using GalacticBoundStudios.HexTech.PathFinding;
 
 namespace GalacticBoundStudios.TheLostFleet
 {
@@ -33,6 +36,9 @@ namespace GalacticBoundStudios.TheLostFleet
         [Header("Prefabs")]
         [SerializeField]
         protected GameObject hexCoordsPrefab;
+        [SerializeField]
+        protected GameObject mapEntityPrefab;
+        Entity prefabEntity;
 
         private EntityManager entityManager;
         private EntityQuery cameraQuery;
@@ -52,6 +58,11 @@ namespace GalacticBoundStudios.TheLostFleet
             startPathfinderButton.onClick.AddListener(onStartPathfinderClicked);
         
             InitializeEventListeners();
+        }
+
+        private void Start()
+        {
+            //prefabEntity = entityManager.Instantiate(mapEntityPrefab);
         }
 
         private void OnDisable()
@@ -125,6 +136,20 @@ namespace GalacticBoundStudios.TheLostFleet
             Debug.Log("Creating pathfinder request");
 
             Debug.Log("Create path from " + pathStartPos + " to " + pathEndPos);
+
+            //HexMapTransformData mapTransformData = HexMapManager.Instance.Config.TransformData;
+            //float2 spawnLoc = HexMath.HexToPixel(pathStartPos, in mapTransformData);
+            //Instantiate(mapEntityPrefab, new Vector3(spawnLoc.x, 0, spawnLoc.y), Quaternion.identity, GameObject.Find("EntityInjection").transform);
+
+            //Entity entity = entityManager.Instantiate(mapEntityPrefab);
+
+            Entity spawnRequestEntity = entityManager.CreateEntity(typeof(HexTechCreatePathRequest));
+            entityManager.SetComponentData(spawnRequestEntity, new HexTechCreatePathRequest()
+            {
+                startPos = pathStartPos,
+                endPos = pathEndPos,
+            });
+
         }
 
         public void SetPathStartPos(HexCoord startPos)

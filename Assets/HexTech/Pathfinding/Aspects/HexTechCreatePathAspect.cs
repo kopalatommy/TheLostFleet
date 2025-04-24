@@ -12,5 +12,7 @@ namespace GalacticBoundStudios.HexTech.PathFinding
         public readonly RefRO<HexTechMapEntityTag> entityFlag;
         // The entity's movement settings
         public readonly RefRO<HexTechMovementSettings> movementSettings;
+        // The target position for the entity
+        public readonly RefRO<HexTechCreatePathRequest> pathRequest;
     }
 }

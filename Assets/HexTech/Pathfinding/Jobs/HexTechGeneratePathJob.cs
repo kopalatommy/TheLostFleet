@@ -1,3 +1,4 @@
+using System.Linq;
 using GalacticBoundStudios.DataScribes.Managed;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
@@ -7,109 +8,124 @@ using Unity.Jobs;
 
 namespace GalacticBoundStudios.HexTech.PathFinding
 {
-    // Uses A* algorithm to calculate the path between 2 points
     [BurstCompile]
-    public struct HexTechGeneratePathJob : IJobParallelFor
+    // Uses the A* algorithm to build a path between the given nodes
+    public partial struct HexTechCreatePathJob : IJobEntity
     {
-        struct PathStep: System.IComparable<PathStep>
+        struct PathStep : System.IComparable<PathStep>, System.IEquatable<PathStep>
         {
-            public HexCoord coord;
-            public float currentCost;
+            public HexCoord step;
+            public float cost;
 
-            public int CompareTo(PathStep other)
+            public int CompareTo(PathStep obj)
             {
-                return currentCost.CompareTo(other.currentCost);
+                return cost.CompareTo(obj.cost);
+            }
+
+            public bool Equals(PathStep other)
+            {
+                return step.Equals(other.step);
             }
         }
 
-        // This is how we know if a tile is walkable
-        // [ReadOnly]
-        // public NativeHashMap<HexCoord, HexTechWalkable> moveData;
         [ReadOnly]
-        public NativeArray<HexTechCreatePathRequest> requests;
+        public NativeHashMap<HexCoord, float> costMap;
 
-        // This is used to write the path to the target entity
-        public EntityCommandBuffer ecb;
+        public EntityCommandBuffer.ParallelWriter entityCommandBuffer;
 
-        // Queue of locations to process, priority queue based on the heuristic cost with
-        // cheaper
-        private NativePriorityQueue<PathStep> buildQueue;
-        private NativeHashMap<HexCoord, HexCoord> pathSteps;
-
-        public void Execute(int reqIndex)
+        public void Execute(HexTechCreatePathAspect aspect)
         {
-            // buildQueue = new NativePriorityQueue<PathStep>(Allocator.TempJob);
-
-            // ecb.AddComponent(requests[reqIndex].entity, new HexTechPathData()
-            // {
-            //     path = ProcessRequest(requests[reqIndex])
-            // });
-
-            // buildQueue.Dispose();
-            // pathSteps.Dispose();
+            NativeList<HexCoord> path = FindPath(aspect.pathRequest.ValueRO.startPos, aspect.pathRequest.ValueRO.endPos);
+            
+            entityCommandBuffer.RemoveComponent<HexTechCreatePathRequest>(aspect.entity.Index, aspect.entity);
+            entityCommandBuffer.AddComponent<HexTechMapPath>(aspect.entity.Index, aspect.entity, new HexTechMapPath()
+            {
+                path = path
+            });
         }
 
-        private NativeList<HexCoord> ProcessRequest(in HexTechCreatePathRequest req)
+        public NativeList<HexCoord> FindPath(HexCoord start, HexCoord goal)
         {
-            buildQueue.Add(new PathStep()
-            {
-                coord = req.startPos,
-                currentCost = 0
-            });
+            NativePriorityQueue<PathStep> openQueue = new NativePriorityQueue<PathStep>(Allocator.TempJob);
+            NativeHashMap<HexCoord, HexCoord> pathStepMap = new NativeHashMap<HexCoord, HexCoord>(128, Allocator.TempJob);
 
-            while (!buildQueue.IsEmpty)
-            {
-                PathStep currentStep = buildQueue.Dequeue();
+            NativeArray<HexCoord> neighborsArray = new NativeArray<HexCoord>(6, Allocator.TempJob);
 
-                if (currentStep.coord.Equals(req.endPos)) {
-                    return RebuildPath(req.endPos, req.startPos);
-                }
-                // If the current coord has already been accessed, then skip this node
-                // Based on how the algorithm works, the first time that a coord is accessed
-                // will be the shortest dist
-                if (pathSteps.ContainsKey(currentStep.coord)) {
-                    continue;
+            while (!openQueue.IsEmpty) {
+                PathStep currentStep = openQueue.Dequeue();
+
+                if (currentStep.Equals(goal)) {
+                    openQueue.Dispose();
+                    pathStepMap.Dispose();
+                    neighborsArray.Dispose();
+                    return RebuildPath(start, goal, pathStepMap);
                 }
 
-                NativeArray<HexCoord> neighbors = HexMath.Neighbors(currentStep.coord);
+                GetNeighbors(currentStep.step, neighborsArray);
 
-                // Add each neighbor that has not yet been reached to the build queue
-                for (int i = 0; i < 6; i++) {
-                    // If the path steps map already contains a def for the coord, it has already been added. So skip it
-                    if (pathSteps.ContainsKey(neighbors[i])) {
+                // Add each neighbor to the queue
+                for (int i = 0; i < 6; i++)
+                {
+                    // Skip nodes that have already been accessed
+                    if (pathStepMap.ContainsKey(neighborsArray[i])) {
                         continue;
                     }
 
-                    // The cost to reach this location
-                    float gCost = currentStep.currentCost;
-                    // The estimated cost to reach the end position
-                    float hCost = HexMath.Distance(neighbors[i], req.endPos);
-                    // The total cost of the node
-                    float fCost = gCost + hCost;
-
-                    pathSteps.Add(neighbors[i], currentStep.coord);
-                    buildQueue.Add(new PathStep()
+                    float cost = currentStep.cost + Heuristic(neighborsArray[i], goal);
+                    openQueue.Add(new PathStep()
                     {
-                        coord = neighbors[i],
-                        currentCost = fCost
+                        step = neighborsArray[i],
+                        cost = cost + currentStep.cost + costMap[neighborsArray[i]],
                     });
+                    // Create a map between the current step and it's predecessor
+                    pathStepMap.Add(neighborsArray[i], currentStep.step);
+
+                    // Resize the path map if at capacity
+                    if (pathStepMap.Capacity == pathStepMap.Count) {
+                        pathStepMap.Capacity += 128;
+                    }
                 }
             }
+
+            openQueue.Dispose();
+            pathStepMap.Dispose();
+            neighborsArray.Dispose();
+
             return new NativeList<HexCoord>(Allocator.Persistent);
         }
 
-        private NativeList<HexCoord> RebuildPath(HexCoord currentCoord, HexCoord startPos)
+        private float Heuristic(HexCoord coord, HexCoord goal)
         {
-            // Create as persistent b/c this will be given to the unit
+            return HexMath.Distance(coord, goal);
+        }
+
+        private void GetNeighbors(HexCoord coord, NativeArray<HexCoord> neighborsArray)
+        {
+            neighborsArray[0] = HexMath.Add(coord, new HexCoord(0, 1));
+            neighborsArray[1] = HexMath.Add(coord, new HexCoord(0, -1));
+            neighborsArray[2] = HexMath.Add(coord, new HexCoord(1, 0));
+            neighborsArray[3] = HexMath.Add(coord, new HexCoord(-1, 0));
+            neighborsArray[4] = HexMath.Add(coord, new HexCoord(1, -1));
+            neighborsArray[5] = HexMath.Add(coord, new HexCoord(-1, 1));
+        }
+
+        private NativeList<HexCoord> RebuildPath(HexCoord start, HexCoord goal, NativeHashMap<HexCoord,HexCoord> pathStepMap)
+        {
             NativeList<HexCoord> path = new NativeList<HexCoord>(Allocator.Persistent);
 
-            path.Add(currentCoord);
-
-            while (!currentCoord.Equals(startPos)) {
-                currentCoord = pathSteps[currentCoord];
-                path.Add(currentCoord);
+            // Rebuild the path from end to start, until the current node is the start
+            while (!goal.Equals(start))
+            {
+                // Add the current node to the path
+                path.Add(goal);
+                // Get the predecessor
+                goal = pathStepMap[goal];
             }
-
+            // Add the start node because it has not yet been added
+            path.Add(start);
+            // Reverse the path because it was built in reverse
+            path.Reverse();
+            // Return the resulting path
             return path;
         }
     }

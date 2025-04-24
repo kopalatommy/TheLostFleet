@@ -1,87 +1,268 @@
 # Game Design Document
 
-## Introduction
+## 1. High‑Level Concept
 
-### Name
+### 1.1 Game Title
 
-1. The Lost Fleet
+- The Lost Fleet
+  - Original Name, but used on other games
+- Echoes of the Far Rim
+  - I like this one a lot
+  - Retains the sense of isolation but sidesteps direct overlap.
+- Fleet of the Lost
 
+### 1.2 Genre & Core Gameplay Pillars
 
-### Premise
+**Hybrid Strategy Genre**
 
-The game follows a captain and crew that get lost while traveling on the edge of the galaxy. The crew finds themselves lost on the other side of 'the wall' a region of space chock full of anomalies that prevent normal travel. In the unknown region of space, the crew awakens in an a junkyard, full of company ships of all shapes and sizes. As the crew explores the area they find evidence of alien activity. The game starts as the crew makes a bind jump to escape the unknown entity.
+- *Real‑Time Tactical Maneuvering* — minute‑to‑minute ship positioning and formation shifts occur in continuous time, with a **pause‑and‑command** feature that lets players issue complex orders without twitch pressure.
+- *Turn‑Based Command Phase* — when the player commits orders, the game resolves weapon salvos, abilities, and movement in discrete "ticks," enabling deterministic outcomes and deep planning.
+- *Exploration‑Driven Roguelite Structure* — procedurally generated star sectors, fog of war, and limited resources create high stakes and strong replayability.
+- *Narrative Survival Focus* — the fleet is stranded in hostile space; every choice balances progress toward home against attrition.
 
-1. In unknown and hostile environment
-2. Evidence of an ancient alien war
-    Was between aliens and the AI they created
-    The aliens lost and only the AI remains
-3. Humanity has spread across an arm of the galaxy, but is blocked by the wall. A area full of anomalies that prevents stellar travel. There are many factions in the known universe, some are at war. This is threatening to become a full galactic war rather than a collection of disjoint conflicts.
-4. A large corporation has been trying to find a way through the wall. They have an iron grip on this portion of the galaxy and are forcing most other groups out. 
-5. The player controls a fleet that is employed by the corporation. The type of fleet the player picks will determine the initial strengths and weaknesses of their fleet.
+**Core Gameplay Pillars**
 
-### Target Audience
+1. **Tactical Fleet Command** – Multi‑ship control, formation systems, shield facings, and synchronized ability timings define combat depth.
+2. **Exploration & Navigation** – Scanning, charting jump lanes, deciphering anomalies, and securing safe harbor.
+3. **Resource & Crew Management** – Fuel, munitions, spare parts, morale, and command XP; scarcity drives meaningful trade‑offs.
+4. **Ship & Technology Progression** – Modular hull upgrades, weapon research trees, and crew specialization enable evolving strategies.
+5. **Emergent Threat Ecosystem** – Alien factions, spaceborne hazards, and environmental effects adapt to player actions, ensuring no two runs feel the same.
+6. **Persistent Consequences** – Hull breaches, crew casualties, and reputation shifts carry forward, raising tension and rewarding foresight.
 
-1. People who like RTS and Turn based strategy games
-2. Science fiction setting
+### 1.3 Vision Statement (“The X of Y” Elevator Pitch)
 
-### Platform
+**Vision Statement — “The Tactical Survival of a Stranded Armada”**  
+*A rogue‑lite fusion of real‑time fleet tactics and turn‑based hex exploration where every decision carries existential weight. Marshal a handful of battered starships, out‑think adaptive alien threats, and gamble scarce resources to chart a path home—turning desperation into mastery one harrowing jump at a time.*
 
-1. PC. MAC
+### 1.4 Target Audience & Platforms
 
-## Gameplay Loop
+**Primary Platform**
 
-### Core Gameplay Loop
+- **PC (Windows & Linux via Steam, GOG, Epic)** — mouse‑keyboard is the reference control scheme; optional game‑pad fallback supported. MacOS release considered post‑launch once Metal performance is confirmed.
 
-The main gameplay loop revolves around the user exploring a region of space to upgrade and grow their fleet. The begginning portion of the game will focus on the player expanding their fleet by scavenging sector of space. In the middle of the game, the gameplay will transition to more combat focused. This is where the player will work on building a more cohesive force. The end game will see the player put that fleet to the test to overcome increasingly difficult challenges.
+**Secondary Distribution Goals**
 
-### Unique selling point
+- **Steam Deck “Playable”** certification with responsive, scalable UI (1280 × 800 baseline).
+- Console ports (Xbox Series X | S, PlayStation 5) evaluated after break‑even on PC.
 
-There are few games that combine realtime and turn-based gameplay into a single game. These games offer a unique blend of strategy that I really enjoy. I have yet to see a game combine these elements in a space themed game. It will have gameplay similar to the follow games:
+**Core Audience Segments**
 
-#### Homeworld
+| Segment | Archetypal Player | Genre Touchstones | Engagement Drivers |
+|---------|------------------|------------------|--------------------|
+| Tactical Strategists | 25–45 yo PC gamers who relish pausable real‑time tactics blended with turn‑based planning | *Homeworld*, *Battlestar Galactica Deadlock*, *Company of Heroes* | Formation nuance, deterministic order resolution |
+| Roguelite Explorers | Fans of *FTL*, *Into the Breach*, *Slay the Spire* | Procedural runs, meta‑progression | Varied seeds, high replayability |
+| Narrative Sci‑Fi Enthusiasts | Readers of hard‑sci novels, *The Expanse* watchers | Story‑driven strategy hybrids | Mystery of the Wall, moral choices |
 
-    I home to create similar combat to the Homeworld games. It offers an interesting and complex gameplay loop that I really enjoy. It will give the players a lot of control over their ships so that they can see their strategy and build come together.
+**Accessibility Commitments**
 
-#### WarGame: Red Dragon
+- Full key rebinding, input dead‑zone tuning, and combat slow‑down slider.
+- Font scaling to 200 % and dyslexia‑friendly typeface option.
+- Color‑blind palettes (deuteranopia, protanopia, tritanopia) and high‑contrast UI icons.
+- Screen‑reader tags for critical HUD elements and narrated menus.
 
-    I enjoyed the way the map works in these games. It provides a clear and concise overview of what is going on for a tactical approach. 
+**Community & Longevity Hooks**
 
-#### Slay the Spire
+- **Data‑driven mod support** (JSON ship stats, Lua event scripts) with Steam Workshop integration.
+- Daily challenge seeds and season‑style content drops to sustain engagement.
 
-    I want to emulate the artifacts that you can obtain in Slay the Spire. It provides a great way to shake up each play through and keep the game interesting. I particularly like how the artifacts break the game in various ways, but this can sometimes come back to bite you. The way it lets you gamble with benefits and determents is very engaging.
+---
 
-#### Stellaris
+## 2. Gameplay Overview
 
-    I like how Stellaris lets players design their ships. the same ship base can be configured many different ways that allow for more control and personalization.
+### 2.1 Player Objectives & Win/Loss Conditions
 
-## Mechanics
+**Primary Campaign Objective**  
+Chart a navigable route from the stranded sector to the nearest **Home‑Beacon Jump Gate** and execute the jump back to known space with at least one operational flagship.
 
-### Player Objectives
+**Win Conditions**
+- Enter the final sector exit hex and survive the jump‑sequence event.
+- Any bonus objectives completed (see Side Objectives) add to final score but are *not* mandatory for victory.
 
-#### Survive
+**Fail Conditions**
+- **Total Fleet Loss:** All player‑controlled ships destroyed.
+- **Critical Resource Collapse:** Fleet becomes unable to move or fight for three consecutive turns due to zero fuel/reactor integrity (optional iron‑man setting).
 
-    The player finds themselves in a hostile environment and must survive a variety of encounters.
+**Side Objectives (Optional per Run)**
+| Category | Example Goal | Reward Type |
+|----------|--------------|-------------|
+| Distress Signals | Rescue trapped civilian convoy within 5 turns | Supplies + morale boost |
+| Tech Salvage | Board derelict research cruiser | Random advanced blueprint |
+| Faction Contracts | Eliminate pirate raider nest | Reputation credit + rare parts |
+| Artifact Hunts | Decode star‑chart riddles to locate relic vault | **Game‑changer Artifact** |
+| Crew Arcs | Fulfill officer’s personal quest | Permanent commander trait |
 
-#### Escape
+Side objectives deepen narrative context, boost score, and meaningfully power‑spike the fleet but remain optional—allowing risk‑averse players to race for the exit while optimizers chase high‑value detours.
 
-    The player must escape the hostile environment and make it back to the known universe.
+**Partial Fail & Recovery Mechanics**
+- Flagship destruction triggers a one‑time emergency command transfer to the next highest‑ranked vessel.
+- Shipyard hexes allow rebuilding lost hulls (high cost), giving comeback routes short of total defeat.
 
-#### 4X
+**Session vs. Campaign Framing**
+- One *run* spans 3–5 procedural sectors (~90–120 min); successful return unlocks higher difficulty tiers.
+- Meta‑progression: collected Artifacts and commander XP persist between runs, motivating repeat attempts.*
 
-1. Expand
-    Expand fleet. Numbers and Tech
-2. Explore
-    Travel around the map looking for more resources and a way back
-3. Exploit
-    Find resources
-    Find tech and artifacts
-4. Exterminate
-    Overcome many enemies in a variety of encounters
+### 2.2 Core Loop
 
-The game is split into 2 sections: the system and regions. The system map will represent a solar system in the galaxy split into a hexagon grid. While in this section, the game is turn-based. The player will be in control of a fleet of ships that can move around the system. Each tile will represent a region of space in the solar system. The player will encounter different events that trigger a real-time action environment. 
+```
+Turn‑Based Map Phase → Event Hex Trigger → Real‑Time Encounter → Reward & Refit → Next Strategic Decision
+```
 
-While in the real time environment, the player will be in control of their fleet. It will be made up of a variety of space ships, similar to existing navies. There will be a variety of different encounters:
+| Phase | Player Action | System Resolution | Outcome |
+|-------|---------------|-------------------|---------|
+| **Plan** | Plot course across hex grid; allocate fuel & sensor pings | Pathfinding validation, intel roll | Risk profile established |
+| **Engage** | Command fleet in real‑time combat or narrative decision | Combat physics & branching logic | Victory, retreat, or loss |
+| **Reward** | Accept or select loot | Weighted drop table by difficulty | **New Ship**, **Tech Blueprint**, **Supplies**, or **Artifact** |
+| **Refit / Progress** | Install upgrades, redistribute crew, repair | Stat & ability updates | Power curve climbs |
 
-1. Combat. Either Attacking or defending. Will have 10 minutes to complete the encounter. Either win or lose. In these encounters, the ships can be damaged or destroyed. A ship can go from All Clear -> Damaged -> Destroyed, but never from All Clear -> Destroyed. This will prevent a lot of the frustration with these types of games.
+*30‑second loop* – micro‑maneuvers during battle.  
+*5‑minute loop* – one hex traversal → encounter → loot/repairs.  
+*30‑minute loop* – clear a sector ring and unlock next jump gate.
 
-2. Scavenge/Salvage. The player finds themselves in a region of space with some sort of artifact or remnant of different ships. The player can scavenge the supplies in the region to upgrade, repair, or add to their fleet. In the first solar system, the player will 
+### 2.3 Key Mechanics
+
+| System      | Brief Description | Player Skill/Stat Driven? |
+| ----------- | ----------------- | ------------------------- |
+| Strategic Movement | Turn‑based navigation across a **hexagonal sector grid**; each hex represents a star system or deep‑space region. Movement consumes fuel, advances time, reveals fog‑of‑war, and may trigger encounters. | Hybrid (player planning & ship stats) |                   |                           |
+| Tactical Engagements | **Real‑time (with pause) fleet battles** that occur when entering designated event hexes or ambush scenarios; uses formation commands, facing shields, and ability cooldowns. | Player Skill + Crew/Tech Stats |                   |                           |
+| Economy | Resource acquisition & expenditure: fuel, supplies, repair parts; trade or salvage drives exploration tempo. | Strategic planning |                   |                           |
+| Crafting    | On‑ship fabrication of ammo, drones, and hull mods using salvaged materials. | Crew skill checks |
+| Artifacts | Rare **game‑changer relics** from high‑tier events; alter core rules (e.g., shield inversion, instant‑jump thrusters, time‑dilation field). Stackable for run‑defining builds. | Passive modifiers chosen by player |
+| Multiplayer |                   |                           |
+
+### 2.4 Controls & User Input
+
+*\<Primary input schemes, accessibility options>*
+
+---
+
+## 3. Narrative & World‑Building
+
+### 3.1 Setting & Theme
+
+**Era & Civilization**  
+Humanity’s *Interstellar Commonwealth* spans thousands of settled worlds, linked by Alcubierre‑style jump corridors and dominated by megacorporate logistics guilds. Routine spaceflight, modular habitation, and cyber‑spliced cultures form a cosmopolitan baseline.
+
+**The Frontier & “The Wall”**  
+At the rim of charted space lies a vast barrier of quantum‑flux anomalies—the **Wall**—through which no conventional jump drive can pass. Sensor ghosts, gravitational shear, temporal echoes: explorers who probe too close rarely return.
+
+**Tone & Themes**  
+- *Isolation & Discovery* – waking beyond the Wall with no contact home.  
+- *Corporate Hubris* – evidence that the employer’s clandestine project triggered the catastrophe.  
+- *Ruins & Relics* – graveyards of shattered hulls juxtaposed with eerily pristine alien megastructures.  
+- *Survival vs. Curiosity* – every scrap salvaged may fuel escape—or unlock deeper truths.
+
+**Aesthetic Touchstones**  
+Hard‑sci silhouettes, cold color palette punctuated by ion‑storm neons, derelict geometries reminiscent of *Event Horizon*, *Homeworld*, and Ian McQue concept art.
+
+### 3.2 Story Synopsis
+
+**Act I – Through the Breach**  
+Contracted by *Orion Dynamics Ltd.* to survey mineral anomalies near the Wall, the player’s escort fleet is caught in a destabilizing rift. They awaken adrift on the far side amid a **corp‑branded graveyard**, with long‑dead distress beacons orbiting a dormant alien station. Initial objectives: assess damage, secure supplies, and locate surviving crew.
+
+**Act II – Echoes in the Void**  
+Exploration reveals the station is partially powered and running cryptic subspace pulses. Logs from wrecks implicate Orion Dynamics in experimental “fold‑tunneling” tech that breached the Wall decades prior—dooming multiple expeditions. Adaptive biomechanical drones (“Scavengers”) begin harassing the fleet, repurposing wreckage to evolve. The player must salvage tech, forge uneasy truces with other stranded factions, and decipher the station’s control lattice.
+
+**Act III – Exodus Protocol**  
+By restoring key station subsystems, the fleet can repoint its ancient gate array toward Commonwealth coordinates—but doing so will awaken the station’s failsafe guardian AI and trigger a last, massive hostile response. Choices made earlier (rescuing allies, hoarding artifacts, or cannibalizing wrecks) determine whether the exodus battle is a desperate sprint, a coordinated flotilla offensive, or a stealth infiltration that hijacks the AI itself.
+
+**Twists & Branches**  
+- Discovery that some Scavenger drones contain human neuro‑prints—crew of earlier corporate runs subsumed into the swarm.  
+- The Wall is a containment membrane erected by a long‑dead precursor species; ruptures risk unleashing the Scavengers into known space.  
+- Optional ending: sacrifice the jump home to seal the breach permanently, earning a bittersweet victory.
+
+**Narrative Delivery**  
+Crew banter, collectible black‑box logs, and dynamic event chains tied to hex sectors ensure story beats emerge organically with roguelite variability.
+
+### 3.3 Characters
+
+| Name | Role | Motivation | Mechanics Impact |
+| ---- | ---- | ---------- | ---------------- |
+
+---
+
+## 4. Level & Content Design
+
+### 4.1 Level Progression Structure
+
+Procedurally generated **hex‑grid star sectors**. The overworld map comprises concentric "rings" of hexes leading toward a distant exit beacon. Sector topology, hazard density, and faction presence vary per run, blending roguelite unpredictability with strategic planning.
+
+- **Exploration Layer:** Turn‑based hex traversal with limited scanning range.
+- **Encounter Layer:** Real‑time battles or narrative events triggered by specific hex types (e.g., derelict, anomaly, hostile fleet).
+- **Progression Gates:** Nebula walls, warp rifts, or blockade fleets force the player to weigh risk vs. resource expenditure before advancing.*
+
+### 4.2 Environmental Puzzles & Challenges
+
+*\<Unique hooks per biome/zone>*
+
+### 4.3 Enemy & Encounter Design
+
+| Enemy Archetype | Behavior | Counterplay |
+| --------------- | -------- | ----------- |
+
+---
+
+## 5. Art & Audio Direction
+
+### 5.1 Visual Style Guide
+
+*\<Reference titles, color palette, UI philosophy>*
+
+### 5.2 Character & Environment Art Requirements
+
+### 5.3 Animation Principles
+
+### 5.4 Audio & Music Goals
+
+---
+
+## 6. Technical Specifications
+
+### 6.1 Engine & Tooling
+
+*\<Unity, Unreal, Godot, custom…>*
+
+### 6.2 Target Performance Metrics
+
+*\<FPS, load times, memory budget>*
+
+### 6.3 Online / Networking Architecture
+
+---
+
+## 7. Production Plan
+
+### 7.1 Team Roles & Responsibilities
+
+### 7.2 Milestones & Timeline (Gantt Overview)
+
+### 7.3 Budget & Resource Allocation
+
+---
+
+## 8. Monetization & Market Strategy
+
+### 8.1 Business Model (Premium, F2P, DLC, Live‑Ops)
+
+### 8.2 Competitive Analysis & Positioning
+
+### 8.3 Community & Marketing Beats
+
+---
+
+## 9. Accessibility & Inclusivity Considerations
+
+---
+
+## 10. Risks & Mitigations
+
+| Risk | Probability | Impact | Mitigation |
+| ---- | ----------- | ------ | ---------- |
+
+---
+
+## 11. Appendices
+
+- Prototypes & Mock‑ups links
+- Reference material & inspiration board
+- Glossary of in‑game terminology
+

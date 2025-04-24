@@ -23,6 +23,11 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
         {
             public override void Bake(HexTechMapAuthoring authoring)
             {
+                if (HexMapManager.Instance == null)
+                {
+                    Debug.Log("Baker<HexTechMapAuthoring>.Baker: HexMapManager.Instance == null");
+                }
+
                 HexMapConfig mapConfig = authoring.mapConfigOverride != null ? authoring.mapConfigOverride : HexMapManager.Instance.Config;
 
                 Debug.Log("Baking HexTechMapAuthoring");
