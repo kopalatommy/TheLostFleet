@@ -8,8 +8,8 @@ using Unity.Collections;
 using Unity.Transforms;
 using UnityEngine.UI;
 using GalacticBoundStudios.HexTech.MapGeneration;
-using GalacticBoundStudios.Utilities;
 using GalacticBoundStudios.HexTech.PathFinding;
+using GalacticBoundStudios.SpawnPrefabsSystem;
 
 namespace GalacticBoundStudios.TheLostFleet
 {
@@ -56,7 +56,7 @@ namespace GalacticBoundStudios.TheLostFleet
             cameraQuery = entityManager.CreateEntityQuery(typeof(RTSCameraTag));
         
             startPathfinderButton.onClick.AddListener(onStartPathfinderClicked);
-        
+
             InitializeEventListeners();
         }
 
@@ -143,13 +143,23 @@ namespace GalacticBoundStudios.TheLostFleet
 
             //Entity entity = entityManager.Instantiate(mapEntityPrefab);
 
-            Entity spawnRequestEntity = entityManager.CreateEntity(typeof(HexTechCreatePathRequest));
-            entityManager.SetComponentData(spawnRequestEntity, new HexTechCreatePathRequest()
-            {
-                startPos = pathStartPos,
-                endPos = pathEndPos,
-            });
+            // Entity spawnRequestEntity = entityManager.CreateEntity(typeof(HexTechCreatePathRequest));
+            // entityManager.SetComponentData(spawnRequestEntity, new HexTechCreatePathRequest()
+            // {
+            //     startPos = pathStartPos,
+            //     endPos = pathEndPos,
+            // });
 
+            HexMapTransformData transformData = HexMapManager.Instance.Config.TransformData;
+            float2 mapPos = HexMath.HexToPixel(pathStartPos, in transformData);
+
+            Entity spawnUnitRequest = entityManager.CreateEntity(typeof(SpawnPrefabRequest));
+            entityManager.SetComponentData(spawnUnitRequest, new SpawnPrefabRequest
+            {
+                keyHash = "MapEntity".GetHashCode(),
+                position = new float3(mapPos.x, 0, mapPos.y),
+                rotation = quaternion.identity,
+            });
         }
 
         public void SetPathStartPos(HexCoord startPos)

@@ -43,9 +43,14 @@ namespace GalacticBoundStudios.RTSCamera
 
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-                Debug.Log("RTSCameraAuthoring authoring: " + authoring);
-                Debug.Log("RTSCameraAuthoring authoring.config: " + authoring.config);
-                Debug.Log("RTSCameraAuthoring authoring.config.movementSpeed: " + authoring.config.movementSpeed);
+                //Debug.Log("RTSCameraAuthoring authoring: " + authoring);
+                //Debug.Log("RTSCameraAuthoring authoring.config: " + authoring.config);
+                //Debug.Log("RTSCameraAuthoring authoring.config.movementSpeed: " + authoring.config.movementSpeed);
+
+                if (authoring.config == null)
+                {
+                    authoring.config = new RTSCameraConfig();
+                }
 
                 AddComponent(entity, new RTSCameraMovementSettings
                 {

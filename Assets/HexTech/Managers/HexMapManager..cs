@@ -74,7 +74,10 @@ namespace GalacticBoundStudios.HexTech
 
         private void OnCreateNewCoord(HexCoord coord)
         {
-            mapCostData.Add(coord, 0);
+            if (!mapCostData.ContainsKey(coord))
+            {
+                mapCostData.Add(coord, 0);
+            }
         }
     }
 }

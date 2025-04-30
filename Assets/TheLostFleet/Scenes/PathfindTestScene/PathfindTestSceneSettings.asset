@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: PathfindTestSceneSettings
   m_EditorClassIdentifier: 
   objectsToSpawn:
-  - prefabToSpawn: {fileID: 114540852431035261, guid: 4f2b88b4f7f7d8b4ca0d50baeb9d4ee9, type: 3}
-    spawnLocation: {x: 0, y: 10, z: 0}
-    spawnRotation: {x: 75, y: 0, z: 0}
   - prefabToSpawn: {fileID: 181252712379173693, guid: ea4b089e504845241967d4e50da8478c, type: 3}
     spawnLocation: {x: 0, y: 0, z: 0}
     spawnRotation: {x: 0, y: 0, z: 0}
