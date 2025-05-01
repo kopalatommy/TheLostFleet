@@ -70,6 +70,11 @@ namespace GalacticBoundStudios.TheLostFleet
             RemoveLingeringCoords();
         }
 
+        private void OnDestroy()
+        {
+            RemoveLingeringCoords();
+        }
+
         void Update()
         {
             NativeArray<Entity> cameraEntities = cameraQuery.ToEntityArray(Allocator.TempJob);
@@ -111,8 +116,10 @@ namespace GalacticBoundStudios.TheLostFleet
 
         void RemoveLingeringCoords()
         {
+            Debug.Log("RemoveLingeringCoords: " + hexCoordCanvas.transform.childCount);
             foreach (Transform child in hexCoordCanvas.transform)
             {
+                Debug.Log("Destroying " + child.gameObject.name);
                 Destroy(child.gameObject);
             }
         }
