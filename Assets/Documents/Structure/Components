@@ -1,14 +1,248 @@
-# Hex Tech
+# [Echoes of the Far Rim] - Code Structure & Style Guide
 
-## Features
+**Version:** 1.0
+**Last Updated:** [2025-04-30]
 
-### Map Generation
+## 1. Introduction
 
-#### Processes:
+### 1.1 Purpose
+This document defines the coding standards, architectural patterns, and organizational structure for the [Your Game Name] Unity project. Its goal is to ensure code quality, consistency, maintainability, and ease of onboarding for all developers.
 
-1. Creating a hex grid
+### 1.2 Scope
+This guide applies to all C# scripts, shaders (if applicable), custom editor tools, and asset organization within the Unity project.
 
-    
+### 1.3 Audience
+This document is intended for all current and future developers working on the [Your Game Name] project.
+
+### 1.4 Guiding Principles
+* **Readability:** Code should be easy to read and understand. Prioritize clarity over excessive cleverness.
+* **Maintainability:** Code should be easy to modify and debug. Favor modularity and loose coupling.
+* **Performance:** Write efficient code, especially in performance-critical areas (`Update`, `FixedUpdate`, frequently called methods). Profile and optimize where necessary.
+* **Consistency:** Adhere to the conventions outlined in this document.
+* **Simplicity (KISS):** Keep solutions as simple as possible. Avoid unnecessary complexity.
+* **DRY (Don't Repeat Yourself):** Avoid duplicating code; use methods, inheritance, or composition to reuse logic.
+
+## 2. Overall Architecture
+
+### 2.1 Architectural Pattern(s)
+* **Primary:** Unity's Component-Based Architecture is the foundation.
+* **Secondary (Specify):** Describe any overarching patterns used (e.g., MVC/MVP/MVVM for UI, State Machines for AI/Player, Service Locator/Dependency Injection for managers, Event Bus/Messaging, ScriptableObject Architecture, ECS/DOTS if used). Explain *why* and *how* these patterns are implemented.
+    * *Example: "We use a ScriptableObject-based event system for decoupled communication between major systems like UI and Gameplay."*
+    * *Example: "Player character logic is managed by a Finite State Machine (FSM)."*
+* **Global Systems/Managers:** How are single-instance systems (e.g., `GameManager`, `AudioManager`, `InputManager`) handled? (e.g., Singleton pattern, Static classes, ScriptableObject Managers, Dependency Injection framework like Zenject/VContainer, Service Locator). Define the chosen approach and its implementation details.
+
+### 2.2 Core Systems Overview
+List the major functional blocks of the game and briefly describe their responsibilities and primary interactions. A simple diagram could be beneficial here.
+
+#### 2.2.1 General Systems
+
+* **RTS Camera:** A camera system that will provide a top down view of the map
+* **Unit Selection:**: Allows for the ability to select units in both the real time and turn bases modes
+
+#### 2.2.2 Turn Based Systems
+
+* **System Map Generator:** Handles procedurally generating the system map (Hexagons)
+* **System Map UI Manager:** Manges the UI when the player is in the system map
+
+#### 2.2.3 Real Time Based Systems
+
+## 3. Folder Structure (Project Window)
+
+A consistent folder structure is crucial. Use the following structure as a baseline, adapting as needed. Place project-specific assets within a root folder (e.g., `_ProjectName`, `!Game`) to keep them grouped and sorted at the top.
 
 
-### Path Finding
+Assets/
+├── _ProjectName/           # Top-level folder for project-specific assets
+│   ├── Animations/         # Animation Clips, Controllers, Avatars
+│   │   ├── Controllers/
+│   │   └── Clips/
+│   ├── Art/                # Source art assets & processed assets
+│   │   ├── Models/         # 3D models (FBX, etc.)
+│   │   ├── Textures/       # Texture files (PNG, TGA, etc.)
+│   │   ├── Materials/      # Material assets
+│   │   ├── Sprites/        # 2D sprite assets
+│   │   └── Shaders/        # Custom shader graphs/code
+│   ├── Audio/              # Audio assets
+│   │   ├── Music/
+│   │   └── SFX/            # Sound Effects
+│   ├── Prefabs/            # Game object prefabs
+│   │   ├── Characters/
+│   │   ├── Environment/
+│   │   ├── UI/
+│   │   └── Systems/        # e.g., Manager prefabs
+│   ├── Scenes/             # Scene files
+│   │   ├── Levels/         # Gameplay levels
+│   │   └── System/         # e.g., Boot scene, Main Menu, Persistent scene
+│   ├── Scripts/            # C# scripts
+│   │   ├── Core/           # Essential systems (GameManager, Input, Audio)
+│   │   ├── Gameplay/       # Core game mechanics (Player, Enemies, Items, Abilities)
+│   │   ├── AI/             # Artificial intelligence logic
+│   │   ├── UI/             # UI logic, controllers, views
+│   │   ├── Editor/         # Custom editor scripts (Inspectors, Windows)
+│   │   ├── Utilities/      # General helper scripts, extension methods
+│   │   ├── Data/           # ScriptableObjects holding data definitions
+│   │   └── ThirdParty/     # Scripts related to specific third-party assets (if not in Plugins)
+│   ├── ScriptableObjects/  # ScriptableObject assets (alternative: place within relevant folders like Data, Events)
+│   │   ├── GameSettings/
+│   │   ├── Events/         # SO-based event channels
+│   │   └── Variables/      # SO-based shared variables
+│   └── Timeline/           # Timeline assets
+│
+├── Editor/                 # Project-wide Editor scripts (affecting the Unity Editor itself)
+├── Plugins/                # Third-party code/libraries NOT managed by Package Manager
+├── Resources/              # Use Sparingly! Only for assets loaded via Resources.Load()
+├── StreamingAssets/        # Files copied as-is to build (e.g., config files, external data)
+├── ThirdParty/             # Assets from store/elsewhere NOT managed by Package Manager (alternative to Plugins)
+└── (Package Manager folders - handled by Unity)
+
+*Rationale:* Explain the reasoning behind the main folder divisions.
+
+## 4. Naming Conventions
+
+Consistency is key. Adhere strictly to these conventions.
+
+### 4.1 General C# (Based on Microsoft Guidelines)
+* **Namespaces:** `PascalCase`. Use your company or game name as the root (e.g., `MyCompanyName.MyGameName.Gameplay`).
+* **Classes, Structs, Enums, Delegates, Interfaces:** `PascalCase`.
+* **Interfaces:** Prefix with `I` (e.g., `IDamageable`, `IInteractable`).
+* **Methods:** `PascalCase` (e.g., `CalculateVelocity()`, `ApplyDamage()`). Use verbs or verb phrases.
+* **Properties:** `PascalCase` (e.g., `CurrentHealth`, `TargetPosition`).
+* **Public/Protected Instance Fields:** `PascalCase`. **(Note: Prefer properties over public fields).**
+* **Private/Internal Instance Fields:** `_camelCase` (prefix with underscore) (e.g., `_playerHealth`, `_moveSpeed`). *Be consistent!*
+* **Static Fields:** `PascalCase` (or `s_camelCase` if preferred, be consistent).
+* **Constants (`const`, `static readonly`):** `UPPER_SNAKE_CASE` (e.g., `MAX_HEALTH`, `DEFAULT_SPEED`).
+* **Local Variables:** `camelCase` (e.g., `hitCount`, `tempPosition`).
+* **Method Parameters:** `camelCase` (e.g., `void TakeDamage(int amount)`).
+* **Enum Values:** `PascalCase`.
+* **Events:** `PascalCase`. Often named as gerunds (`-ing`) or past tense (`-ed`) phrases (e.g., `MovementStarted`, `PlayerDamaged`). Event handler methods often use `On` prefix (e.g., `OnPlayerDamaged`).
+
+### 4.2 Unity Specific
+* **Script Files:** `PascalCase`. Must match the primary public `MonoBehaviour` class name within the file (e.g., `PlayerMovement.cs` contains `public class PlayerMovement : MonoBehaviour`).
+* **Script Components:** Use descriptive names indicating purpose. Consider suffixes like `Controller`, `Manager`, `Handler`, `Processor`, `Data`, `View`, `State`, `System`, `Trigger`, `Listener`. (e.g., `PlayerInputHandler`, `EnemySpawnManager`, `HealthView`).
+* **Boolean Variables/Properties:** Use affirmative names, often prefixed with `Is`, `Has`, `Can`, `Should`, `Enable` (e.g., `IsAlive`, `HasWeapon`, `CanJump`, `EnableInput`).
+* **Unity Message Methods (`Awake`, `Start`, `Update`, etc.):** Keep standard Unity naming (`PascalCase`).
+* **Coroutine Methods:** `PascalCase`, often descriptive of the timed process (e.g., `FadeOutAudioCoroutine()`, `ReloadWeaponSequence()`).
+* **Scene Objects (Hierarchy):** `PascalCase`. Use clear, descriptive names. Use prefixes/suffixes for clarity (e.g., `UI_`, `PROP_`, `FX_`, `SYSTEM_`). Group related objects under empty `GameObject` parents (e.g., `Environment > Rocks > Rock_Large_01`).
+* **Asset Files (Prefabs, Materials, Textures, etc.):** `PascalCase` or `snake_case`. Be consistent within asset types. Use prefixes/suffixes where helpful (e.g., `T_` for Texture, `M_` for Material, `P_` or `PFB_` for Prefab, `A_` or `Anim_` for Animation, `AC_` for Animator Controller, `SO_` for ScriptableObject). (e.g., `PFB_PlayerCharacter`, `M_MetalRough`, `T_Rock_N` for normal map).
+
+## 5. Coding Style & Formatting
+
+Use a consistent code style for readability. Consider using an editorconfig file.
+
+* **Braces (`{}`):** Allman style (braces on new lines) is generally preferred for readability in C#. Be consistent.
+    ```csharp
+    public void MyMethod()
+    {
+        if (condition)
+        {
+            // ...
+        }
+    }
+    ```
+* **Indentation:** Use 4 spaces per indentation level (do not use tabs).
+* **Spacing:** Use single spaces around operators (`=`, `+`, `-`, `*`, `/`, `==`, etc.), after commas, and after keywords like `if`, `for`, `while`. No space after opening or before closing parentheses/brackets.
+    ```csharp
+    int result = valueA + valueB;
+    MyMethod(param1, param2);
+    for (int i = 0; i < count; i++)
+    ```
+* **`using` Directives:** Place inside the namespace declaration. Keep sorted and remove unused directives.
+    ```csharp
+    namespace MyGame.Gameplay
+    {
+        using UnityEngine;
+        using System.Collections;
+        // ...
+    }
+    ```
+* **`var` Keyword:** Use `var` when the assigned type is obvious from the right-hand side of the assignment or instantiation (`new`). Use explicit types when clarity is improved or the type isn't immediately apparent.
+    ```csharp
+    var player = GetComponent<PlayerController>(); // Good
+    var items = new List<ItemData>();          // Good
+    int score = GetScore();                    // Good (explicit type improves clarity)
+    ```
+* **Access Modifiers:** Always explicitly state access modifiers (`public`, `private`, `protected`, `internal`). Default to `private` unless wider access is required.
+* **`this` Keyword:** Use `this` only when necessary to disambiguate between instance members and local variables/parameters (e.g., in constructors). Avoid redundant use.
+* **Comments:**
+    * Use `/// <summary>...</summary>` XML documentation comments for all non-private types and members (classes, methods, properties, events, enums). Explain *what* it does, its parameters (`<param>`), and what it returns (`<returns>`).
+    * Use `//` for implementation comments to explain *why* something is done a certain way, or to clarify complex logic. Avoid comments that just restate the code.
+    * Remove commented-out code before committing. Use version control history instead.
+* **Regions (`#region`):** Use sparingly. Can be useful for grouping Unity message methods (`#region Unity Methods`), public API (`#region Public API`), private helpers (`#region Private Methods`), or interface implementations. Avoid excessive nesting or hiding large amounts of code.
+* **Line Length:** Aim for a maximum line length of ~100-120 characters for better readability.
+* **Attributes:** Place attributes on separate lines above the declaration they apply to, unless they are very short and numerous (e.g., `[SerializeField]`).
+    ```csharp
+    [SerializeField]
+    [Tooltip("The maximum health of the character.")]
+    private int _maxHealth = 100;
+    ```
+
+## 6. Script Communication & Decoupling
+
+Define preferred methods for interaction between scripts/systems to promote loose coupling.
+
+* **Direct References (Inspector Assignment):** Suitable for tightly coupled components (e.g., components on the same GameObject, parent/child relationships). Use `[SerializeField]` for private fields.
+* **`GetComponent<T>() / FindObjectOfType<T>()`:** Use `GetComponent` primarily in `Awake` or `Start`. Avoid frequent calls in `Update`. Use `FindObjectOfType` sparingly, as it's slow; prefer dependency injection, service locators, or static accessors for managers.
+* **C# Events (`event`, `Action`, `delegate`):** Excellent for decoupling. Use for one-to-many notifications (e.g., `Player.OnDeath += GameManager.HandlePlayerDeath`).
+* **UnityEvents (`UnityEvent`):** Useful for events configurable in the Inspector. Good for designers or simple connections. Can be less performant than C# events for frequent firing.
+* **Interfaces (`IInterface`):** Define contracts/capabilities (e.g., `IDamageable`, `IInteractable`). Allows interaction without knowing the concrete type (`GetComponent<IDamageable>()`). Promotes flexibility.
+* **ScriptableObject Architecture:** Use ScriptableObjects for:
+    * **Shared Data:** Holding configuration or runtime data accessible by multiple objects.
+    * **Event Channels:** Acting as decoupled event broadcasters/listeners.
+    * **Shared Variables:** Representing global or shared state variables.
+* **Messaging/Event Bus System:** A centralized system where objects publish messages and others subscribe without direct knowledge of each other. Can be custom or via a library.
+* **Static Classes/Events:** Use with extreme caution. Can lead to tight coupling and make testing difficult. Primarily for truly global utility functions or very core system access points.
+* **Dependency Injection (DI):** Using frameworks (like Zenject, VContainer) or manual DI to provide dependencies to objects instead of having them find/create them. Improves testability and decoupling.
+
+## 7. Data Management
+
+* **Configuration Data:** How is game data defined? (e.g., ScriptableObjects are highly recommended, JSON/XML files in `StreamingAssets`, Inspector values for simple cases).
+* **Runtime Game State:** Where is transient game state stored? (e.g., Manager classes, dedicated state objects, ScriptableObject variables).
+* **Saving & Loading:**
+    * **Strategy:** Define what needs saving (player progress, settings, etc.).
+    * **Format:** (e.g., JSON, BinaryFormatter, custom binary). JSON is human-readable, Binary is smaller/faster but less portable.
+    * **Location:** Use `Application.persistentDataPath`.
+    * **Implementation:** Describe the core save/load classes/logic.
+
+## 8. Scene Management
+
+* **Loading Scenes:** `SceneManager.LoadScene` (synchronous) vs. `SceneManager.LoadSceneAsync` (asynchronous). Define when to use each.
+* **Additive Loading:** Using `LoadSceneMode.Additive` for loading multiple scenes (e.g., persistent managers + UI + level).
+* **Data Persistence Between Scenes:** How is data carried across scene loads? (e.g., `DontDestroyOnLoad` for essential managers, ScriptableObjects, static data, passing data via a loading manager).
+
+## 9. Error Handling & Logging
+
+* **Error Handling:** Use `try-catch` blocks for operations that can fail predictably (e.g., file I/O, network requests). Use assertions (`Debug.Assert`) to check for invalid states during development. Avoid catching generic `System.Exception` unless re-throwing.
+* **Logging:**
+    * Use `Debug.Log()`, `Debug.LogWarning()`, `Debug.LogError()` appropriately.
+    * Provide context in log messages (e.g., which GameObject/System generated the message).
+    * Consider using conditional compilation (`#if DEVELOPMENT_BUILD || UNITY_EDITOR`) to include/exclude debug logs from release builds.
+    * Potentially implement a more robust logging system for different log levels (Verbose, Debug, Info, Warning, Error, Critical).
+
+## 10. Asynchronous Operations
+
+* **Coroutines:** Standard Unity way for time-based operations or sequences spread across frames. Use `IEnumerator` methods and `StartCoroutine()`.
+* **`async/await` (Task-based Asynchronous Pattern - TAP):** Suitable for non-Unity specific async operations (e.g., network calls, file I/O) or complex async logic where state management with coroutines becomes cumbersome. Be mindful of execution context when using `await` in Unity (use `UniTask` library for better Unity integration if needed). Define when each approach is preferred.
+
+## 11. Version Control (Git)
+
+* **Setup:** Use a Unity-specific `.gitignore` (available online) to exclude `Library`, `Temp`, `Logs`, build folders, etc. Use `.gitattributes` to handle line endings and force text serialization for scenes/prefabs to improve merging.
+* **Branching Strategy:** Define the branching model (e.g., Gitflow, GitHub Flow, simple feature branches from `main`/`develop`).
+* **Commit Messages:** Follow a consistent format (e.g., Conventional Commits: `feat: Add jump ability`, `fix: Correct player collision issue`, `refactor: Optimize enemy pathfinding`). Messages should be concise and descriptive.
+* **Workflow:** Commit frequently. Push regularly. Use Pull/Merge Requests for code review if working in a team.
+
+## 12. Testing
+
+* Outline the approach to automated testing, if any.
+* **Unity Test Framework:** Use for Edit Mode (logic independent of runtime) and Play Mode (runtime behavior) tests.
+* **Testable Code:** Emphasize writing code that is testable (e.g., separating logic from `MonoBehaviour`, using interfaces, dependency injection).
+
+## 13. Third-Party Assets
+
+* **Integration:** Place assets from the Asset Store or other sources in designated folders (e.g., `ThirdParty`, `Plugins`).
+* **Modification:** Avoid directly modifying third-party code if possible. Use wrappers or extension methods if customization is needed, to simplify updates.
+* **Updates:** Define the process for updating third-party assets.
+
+## 14. Document Maintenance
+
+* This document is a living guide. It should be reviewed and updated periodically as the project evolves, new patterns are adopted, or conventions change.
+* Ensure all team members are aware of the document and its location.

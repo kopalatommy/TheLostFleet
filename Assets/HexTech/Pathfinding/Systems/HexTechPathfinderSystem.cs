@@ -21,7 +21,7 @@ namespace GalacticBoundStudios.HexTech.PathFinding
             HexTechCreatePathJob job = new HexTechCreatePathJob()
             {
                 entityCommandBuffer = parallelWriter,
-                costMap = HexMapManager.Instance.mapCostData
+                // costMap = HexMapManager.Instance.mapCostData
             };
 
             state.Dependency = job.ScheduleParallel(state.Dependency);

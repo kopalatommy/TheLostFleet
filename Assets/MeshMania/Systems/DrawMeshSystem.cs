@@ -1,6 +1,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Rendering;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace GalacticBoundStudios.MeshMania
@@ -76,6 +77,16 @@ namespace GalacticBoundStudios.MeshMania
             mesh.Value.RecalculateNormals();
             mesh.Value.RecalculateBounds();
             mesh.Value.Optimize();
+
+            if (EntityManager.HasComponent<RenderBounds>(entity))
+            {
+                LocalToWorld localToWorld = EntityManager.GetComponentData<LocalToWorld>(entity);
+
+                EntityManager.SetComponentData<RenderBounds>(entity, new RenderBounds
+                {
+                    Value = MeshBoundUtilities.TransformBounds(localToWorld.Value, mesh.Value.bounds)
+                });
+            }
 
             meshData.ValueRO.vertices.Dispose();
             meshData.ValueRO.triangles.Dispose();

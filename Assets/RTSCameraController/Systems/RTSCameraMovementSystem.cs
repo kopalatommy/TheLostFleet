@@ -7,7 +7,7 @@ using Unity.Collections;
 namespace GalacticBoundStudios.RTSCamera
 {
     // Make sure this updates after the input reader system
-    [UpdateAfter(typeof(RTSCameraInputReaderSystem))]
+    // [UpdateAfter(typeof(RTSCameraInputReaderSystem))]
     // This system is responsible for reading in the player input data and determining the camera's acceleration
     public partial struct RTSCameraMovementSystem : ISystem, ISystemStartStop
     {

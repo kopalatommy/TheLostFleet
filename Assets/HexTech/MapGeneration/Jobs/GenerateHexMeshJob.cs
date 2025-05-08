@@ -102,12 +102,12 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
             for (int i = 0; i < 6; i++)
             {
                 triangles[indexOffset + i * 6] = vertexOffset + i;
-                triangles[indexOffset + i * 6 + 1] = vertexOffset + i + 6;
-                triangles[indexOffset + i * 6 + 2] = vertexOffset + (i + 1) % 6;
+                triangles[indexOffset + i * 6 + 2] = vertexOffset + i + 6;
+                triangles[indexOffset + i * 6 + 1] = vertexOffset + (i + 1) % 6;
                 
                 triangles[indexOffset + i * 6 + 3] = vertexOffset + i + 6;
-                triangles[indexOffset + i * 6 + 4] = vertexOffset + (i + 1) % 6 + 6;
-                triangles[indexOffset + i * 6 + 5] = vertexOffset + (i + 1) % 6;
+                triangles[indexOffset + i * 6 + 5] = vertexOffset + (i + 1) % 6 + 6;
+                triangles[indexOffset + i * 6 + 4] = vertexOffset + (i + 1) % 6;
             }
         }
         

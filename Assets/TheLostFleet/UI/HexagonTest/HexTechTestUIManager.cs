@@ -10,6 +10,7 @@ using UnityEngine.UI;
 using GalacticBoundStudios.HexTech.MapGeneration;
 using GalacticBoundStudios.HexTech.PathFinding;
 using GalacticBoundStudios.SpawnPrefabsSystem;
+using GalacticBoundStudios.EchoesOfTheFarRim.SystemMap;
 
 namespace GalacticBoundStudios.TheLostFleet
 {
@@ -42,6 +43,8 @@ namespace GalacticBoundStudios.TheLostFleet
 
         private EntityManager entityManager;
         private EntityQuery cameraQuery;
+        private EntityQuery focusHexagonQuery;
+        private EntityQuery selectedHexagonQuery;
 
         // For path finding
         protected HexCoord currentPos;
@@ -54,6 +57,8 @@ namespace GalacticBoundStudios.TheLostFleet
             
             entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             cameraQuery = entityManager.CreateEntityQuery(typeof(RTSCameraTag));
+            focusHexagonQuery = entityManager.CreateEntityQuery(typeof(SystemMapFocusHexagonData));
+            selectedHexagonQuery = entityManager.CreateEntityQuery(typeof(SystemMapSelectedHexagonData));
         
             startPathfinderButton.onClick.AddListener(onStartPathfinderClicked);
 
@@ -77,41 +82,50 @@ namespace GalacticBoundStudios.TheLostFleet
 
         void Update()
         {
-            NativeArray<Entity> cameraEntities = cameraQuery.ToEntityArray(Allocator.TempJob);
-
-            foreach (var entity in cameraEntities)
+            if (focusHexagonQuery.TryGetSingleton(out SystemMapFocusHexagonData focusHexagon))
             {
-                LocalTransform cameraTransform = entityManager.GetComponentData<LocalTransform>(entity);
-                RTSCameraSettings cameraSettings = entityManager.GetComponentData<RTSCameraSettings>(entity);
-                
-                Ray cameraRay;
-                if (cameraSettings.orthographic)
-                {
-                    cameraRay = CameraUtilities.ScreenPointToRay_Orthographic(Input.mousePosition, cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation, cameraSettings.orthographicSize, cameraTransform.Forward());
-                }
-                else
-                {
-                    cameraRay = CameraUtilities.ScreenPointToRay_Standard(Input.mousePosition, cameraSettings.fieldOfView, cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation);
-                }
-
-                Vector3 intersection = CameraUtilities.DetermineWhereRayIntersectsPlain(cameraRay, float3.zero, new float3(0, 1, 0));
-                HexCoord hexCoord = HexMath.PixelToHex(new float2(intersection.x, intersection.z), HexMapManager.Instance.Config.TransformData);
-
-                mouseMarkerTransform.position = intersection;
-                currentCoordsText.text = hexCoord.ToString();
+                currentCoordsText.text = focusHexagon.coord.ToString();
             }
+            if (selectedHexagonQuery.TryGetSingleton(out SystemMapSelectedHexagonData selectedHexagonData))
+            {
+                selectedCoordsText.text = "Selected(2): " + selectedHexagonData.coord.ToString();
+            }
+            
+            // NativeArray<Entity> cameraEntities = cameraQuery.ToEntityArray(Allocator.TempJob);
 
-            cameraEntities.Dispose();
+            // foreach (var entity in cameraEntities)
+            // {
+            //     LocalTransform cameraTransform = entityManager.GetComponentData<LocalTransform>(entity);
+            //     RTSCameraSettings cameraSettings = entityManager.GetComponentData<RTSCameraSettings>(entity);
+                
+            //     Ray cameraRay;
+            //     if (cameraSettings.orthographic)
+            //     {
+            //         cameraRay = CameraUtilities.ScreenPointToRay_Orthographic(Input.mousePosition, cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation, cameraSettings.orthographicSize, cameraTransform.Forward());
+            //     }
+            //     else
+            //     {
+            //         cameraRay = CameraUtilities.ScreenPointToRay_Standard(Input.mousePosition, cameraSettings.fieldOfView, cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation);
+            //     }
+
+            //     Vector3 intersection = CameraUtilities.DetermineWhereRayIntersectsPlain(cameraRay, float3.zero, new float3(0, 1, 0));
+            //     HexCoord hexCoord = HexMath.PixelToHex(new float2(intersection.x, intersection.z), HexMapManager.Instance.Config.TransformData);
+
+            //     mouseMarkerTransform.position = intersection;
+            //     currentCoordsText.text = hexCoord.ToString();
+            // }
+
+            // cameraEntities.Dispose();
         }
         
         private void InitializeEventListeners()
         {
-            HexMapManager.Instance.onCreateHexagon += OnNewHexagon;
-            HexMapManager.Instance.onSelectHexagon += onSelectHexagonAction;
+            // HexMapManager.Instance.onCreateHexagon += OnNewHexagon;
+            // HexMapManager.Instance.onSelectHexagon += onSelectHexagonAction;
 
-            HexMapManager.Instance.setPathStartPos += SetPathStartPos;
-            HexMapManager.Instance.setPathEndPos += SetPathEndPos;
-            HexMapManager.Instance.startPathFinder += onStartPathfinderClicked;
+            // HexMapManager.Instance.setPathStartPos += SetPathStartPos;
+            // HexMapManager.Instance.setPathEndPos += SetPathEndPos;
+            // HexMapManager.Instance.startPathFinder += onStartPathfinderClicked;
         }
 
         void RemoveLingeringCoords()
@@ -126,10 +140,10 @@ namespace GalacticBoundStudios.TheLostFleet
 
         public void OnNewHexagon(HexCoord coord)
         {
-            float2 pixelCoords = HexMath.HexToPixel(coord, HexMapManager.Instance.Config.TransformData);
+            // float2 pixelCoords = HexMath.HexToPixel(coord, HexMapManager.Instance.Config.TransformData);
 
-            GameObject hexCoords = Instantiate(hexCoordsPrefab, new Vector3(pixelCoords.x, 0, pixelCoords.y), Quaternion.identity, hexCoordCanvas.transform);
-            hexCoords.GetComponentInChildren<TMP_Text>().text = coord.ToString();
+            // GameObject hexCoords = Instantiate(hexCoordsPrefab, new Vector3(pixelCoords.x, 0, pixelCoords.y), Quaternion.identity, hexCoordCanvas.transform);
+            // hexCoords.GetComponentInChildren<TMP_Text>().text = coord.ToString();
         }
 
         public void onSelectHexagonAction(HexCoord coord)
@@ -157,16 +171,21 @@ namespace GalacticBoundStudios.TheLostFleet
             //     endPos = pathEndPos,
             // });
 
-            HexMapTransformData transformData = HexMapManager.Instance.Config.TransformData;
-            float2 mapPos = HexMath.HexToPixel(pathStartPos, in transformData);
+           
+           
+           
+           
+           
+            // HexMapTransformData transformData = HexMapManager.Instance.Config.TransformData;
+            // float2 mapPos = HexMath.HexToPixel(pathStartPos, in transformData);
 
-            Entity spawnUnitRequest = entityManager.CreateEntity(typeof(SpawnPrefabRequest));
-            entityManager.SetComponentData(spawnUnitRequest, new SpawnPrefabRequest
-            {
-                keyHash = "MapEntity".GetHashCode(),
-                position = new float3(mapPos.x, 0, mapPos.y),
-                rotation = quaternion.identity,
-            });
+            // Entity spawnUnitRequest = entityManager.CreateEntity(typeof(SpawnPrefabRequest));
+            // entityManager.SetComponentData(spawnUnitRequest, new SpawnPrefabRequest
+            // {
+            //     keyHash = "MapEntity".GetHashCode(),
+            //     position = new float3(mapPos.x, 0, mapPos.y),
+            //     rotation = quaternion.identity,
+            // });
         }
 
         public void SetPathStartPos(HexCoord startPos)

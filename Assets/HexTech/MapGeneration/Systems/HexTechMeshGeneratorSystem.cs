@@ -1,6 +1,5 @@
 using Unity.Entities;
 using Unity.Mathematics;
-
 using GalacticBoundStudios.MeshMania;
 using GalacticBoundStudios.DataScribes;
 using Unity.Collections;
