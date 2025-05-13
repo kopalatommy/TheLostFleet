@@ -1,7 +1,6 @@
 using System.Linq;
 using GalacticBoundStudios.DataScribes.Managed;
 using Unity.Burst;
-using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -12,16 +11,19 @@ namespace GalacticBoundStudios.HexTech.PathFinding
     // Uses the A* algorithm to build a path between the given nodes
     public partial struct HexTechCreatePathJob : IJobEntity
     {
+        [BurstCompile]
         struct PathStep : System.IComparable<PathStep>, System.IEquatable<PathStep>
         {
             public HexCoord step;
             public float cost;
 
+            [BurstCompile]
             public int CompareTo(PathStep obj)
             {
                 return cost.CompareTo(obj.cost);
             }
 
+            [BurstCompile]
             public bool Equals(PathStep other)
             {
                 return step.Equals(other.step);
@@ -54,7 +56,7 @@ namespace GalacticBoundStudios.HexTech.PathFinding
             while (!openQueue.IsEmpty) {
                 PathStep currentStep = openQueue.Dequeue();
 
-                if (currentStep.Equals(goal)) {
+                if (currentStep.step.Equals(goal)) {
                     openQueue.Dispose();
                     pathStepMap.Dispose();
                     neighborsArray.Dispose();

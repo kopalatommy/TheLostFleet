@@ -70,6 +70,11 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
         public float innerRadius;
     }
 
+    public struct HexTechMapEntityTag : IComponentData
+    {
+        
+    }
+
     [CreateAssetMenu(menuName = "HexTech/HexMapConfig")]
     public class HexMapConfig : ScriptableObject
     {

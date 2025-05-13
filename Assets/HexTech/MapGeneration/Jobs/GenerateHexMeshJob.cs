@@ -51,10 +51,12 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
                 GenerateHexagonTriangles_Hollow(hexIndex, ref meshData.triangles);
                 GenerateHexagonVertices_Hollow(hexIndex, worldPos.x, worldPos.y, mapAspect.hollowData.ValueRO.innerRadius, in mapAspect.transformData.ValueRO, mapAspect.transformData.ValueRO.orientation, ref meshData.vertices);
                 GenerateHexagonColors_Hollow(hexIndex, ref meshData.colors, ref random);
+                GenerateHexagonMetaData_Hollow(hexIndex, coord, ref meshData.uv2);
             } else {
                 GenerateHexagonVertices_Solid(hexIndex, worldPos.x, worldPos.y, mapAspect.hollowData.ValueRO.innerRadius, in mapAspect.transformData.ValueRO, mapAspect.transformData.ValueRO.orientation, ref meshData.vertices);
                 GenerateHexagonTriangles_Solid(hexIndex, ref meshData.triangles);
                 GenerateHexagonColors_Solid(hexIndex, ref meshData.colors, ref random);
+                GenerateHexagonMetaData_Solid(hexIndex, coord, ref meshData.uv2);
             }
         }
 
@@ -153,5 +155,27 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
         }
 
         #endregion // Generate colors
+
+        #region Add Meta Data
+
+        public static void GenerateHexagonMetaData_Hollow(int index, HexCoord coord, ref FixedArray<float4> data)
+        {
+            int startIndex = index * HEXAGON_HOLLOW_VERTS;
+            for (int i = 0; i < HEXAGON_HOLLOW_VERTS; i++)
+            {
+                data[startIndex++] = new Vector4(coord.q, coord.r, 0, 0);
+            }
+        }
+
+        public static void GenerateHexagonMetaData_Solid(int index, HexCoord coord, ref FixedArray<float4> data)
+        {
+            int startIndex = index * HEXAGON_SOLID_VERTS;
+            for (int i = 0; i < HEXAGON_SOLID_VERTS; i++)
+            {
+                data[startIndex++] = new Vector4(coord.q, coord.r, 0, 0);
+            }
+        }
+
+        #endregion
     }
 }

@@ -36,6 +36,7 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
             state.EntityManager.RemoveComponent<HexTechCreateMapTag>(entity);
             state.EntityManager.AddComponentData<MeshData>(entity, meshData);
             state.EntityManager.AddComponent<DrawMeshTag>(entity);
+            state.EntityManager.AddComponentData<HexTechMapEntityTag>(entity, new HexTechMapEntityTag());
 
             Debug.Log("Finished generating hexagon mesh");
         }
@@ -74,6 +75,8 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
         void GenerateMesh(ref HexTechCreateMapRequestAspect request, in Random random, out MeshData meshData)
         {
             meshData = new MeshData();
+
+            meshData.addUV2 = true;
             
             int numHexagons = request.activationGrid.ValueRO.hexGrid.Count;
             NativeArray<HexCoord> hexagonsToCreate = request.activationGrid.ValueRO.hexGrid.GetKeyArray(Allocator.Persistent);
@@ -110,6 +113,7 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
             meshData.triangles = new FixedArray<int>(numHexagons * GenerateHexMeshJob.HEXAGON_SOLID_TRIS);
             meshData.normals = new FixedArray<float3>(numHexagons * GenerateHexMeshJob.HEXAGON_SOLID_VERTS);
             meshData.colors = new FixedArray<float4>(numHexagons * GenerateHexMeshJob.HEXAGON_SOLID_VERTS);
+            meshData.uv2 = new FixedArray<float4>(numHexagons * GenerateHexMeshJob.HEXAGON_SOLID_VERTS);
         }
 
         private void AllocateMeshDataArrays_Hollow(int numHexagons, ref MeshData meshData)
@@ -120,6 +124,7 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
             meshData.triangles = new FixedArray<int>(numHexagons * GenerateHexMeshJob.HEXAGON_HOLLOW_TRIS);
             meshData.normals = new FixedArray<float3>(numHexagons * GenerateHexMeshJob.HEXAGON_HOLLOW_VERTS);
             meshData.colors = new FixedArray<float4>(numHexagons * GenerateHexMeshJob.HEXAGON_HOLLOW_VERTS);
+            meshData.uv2 = new FixedArray<float4>(numHexagons * GenerateHexMeshJob.HEXAGON_HOLLOW_VERTS);
         }
     }
 }

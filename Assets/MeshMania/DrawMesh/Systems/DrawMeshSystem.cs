@@ -74,6 +74,19 @@ namespace GalacticBoundStudios.MeshMania
             mesh.Value.triangles = trisArr;
             mesh.Value.colors = colorsArr;
 
+            if (meshData.ValueRO.addUV2) {
+                Debug.Log("Added mesh meta data");
+
+                Vector4[] uv2s = new Vector4[meshData.ValueRO.uv2.Length];
+
+                for (int i = 0; i < meshData.ValueRO.uv2.Length; i++)
+                {
+                    uv2s[i] = meshData.ValueRO.uv2[i];
+                }
+
+                mesh.Value.SetUVs(2, uv2s);
+            }
+
             mesh.Value.RecalculateNormals();
             mesh.Value.RecalculateBounds();
             mesh.Value.Optimize();

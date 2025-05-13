@@ -11,6 +11,10 @@ namespace GalacticBoundStudios.MeshMania
         public FixedArray<float3> normals;
         public FixedArray<float4> colors;
         //public FixedArray<float2> uvs;
+
+        // This is used to embed meta data in the mesh
+        public bool addUV2;
+        public FixedArray<float4> uv2;
     }
 
     // This data is used to update the correct mesh data

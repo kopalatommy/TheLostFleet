@@ -25,219 +25,14 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
         protected override void OnCreate()
         {
             RequireForUpdate<SystemMapEnableFlag>();
-
-            CreateGenerateMapRequest();
         }
 
         protected void CreateGenerateMapRequest()
         {
             Debug.Log("SystemMapManagerSystem.CreateGenerateMapRequest");
 
-            Entity mapEntity = EntityManager.CreateEntity();
-
-            EntityManager.AddComponentData(mapEntity, new HexMapTransformData
-            {
-                orientation = HexOrientation.FlatTop(),
-                scale = new float2(1, 1),
-                origin = new float3()
-            });
-            EntityManager.AddComponentData(mapEntity, new HexHollowData
-            {
-                isHollow = true,
-                innerRadius = 0.85f
-            });
-
-            HexagonActivationGrid activationGrid = new HexagonActivationGrid
-            {
-                hexGrid = new NativeHashMap<HexCoord, byte>(100, Allocator.Persistent),
-                randomSeed = (uint)System.DateTime.Now.Ticks,
-            };
-            HexCoord minBounds = new HexCoord { q = int.MaxValue, r = int.MaxValue };
-            HexCoord maxBounds = new HexCoord { q = int.MinValue, r = int.MinValue };
-            PopulateHexGrid(HexTechGridShape.Hexagon, ref activationGrid, 15, ref minBounds, ref maxBounds);
-            EntityManager.AddComponentData(mapEntity, activationGrid);
-
-            Mesh mesh = new Mesh();
-            mesh.vertices = new[] { Vector3.up * 1000, Vector3.left * 1000, Vector3.right * 1000, -Vector3.up * 1000 };
-            mesh.triangles = new[] { 0, 1, 2, 1, 2, 3 };
-
-            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-
-            EntityManager.AddComponentData(mapEntity, new LocalTransform
-            {
-                Position = new float3(0, 0, 0),
-                Rotation = quaternion.identity,
-                Scale = 1
-            });
-            EntityManager.AddComponentData(mapEntity, new LocalToWorld
-            {
-                Value = float4x4.Translate(new float3(0, 0, 0))
-            });
-
-            // Create a RenderMeshDescription using the convenience constructor
-            // with named parameters.
-            RenderMeshDescription desc = new RenderMeshDescription(
-                shadowCastingMode: ShadowCastingMode.Off,
-                receiveShadows: false,
-                renderingLayerMask: 1);
-
-            // Create an array of mesh and material required for runtime rendering.
-            RenderMeshArray renderMeshArray = new RenderMeshArray(new Material[] { new Material(Shader.Find("Universal Render Pipeline/Lit")) }, new Mesh[] { mesh });
-
-            RenderMeshUtility.AddComponents(
-                mapEntity,
-                EntityManager,
-                desc,
-                renderMeshArray,
-                MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-
-            EntityManager.AddComponentData(mapEntity, new HexTechCreateMapTag());
-
-            EntityManager.AddComponentData(mapEntity, new MeshIndexData
-            {
-                index = mesh.GetInstanceID()
-            });
-        }
-
-        private void PopulateHexGrid(HexTechGridShape gridShape, ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            switch (gridShape)
-            {
-                case HexTechGridShape.Hexagon:
-                    PopulateHexagonGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-                case HexTechGridShape.Rectangle:
-                    PopulateRectangleGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-                case HexTechGridShape.Triangle:
-                    PopulateTriangleGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-                case HexTechGridShape.HexagonRing:
-                    PopulateHexagonRingGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-            }
-        }
-
-        private void PopulateHexagonGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = -chunkSize; q <= chunkSize; q++)
-            {
-                for (int r = -chunkSize; r <= chunkSize; r++)
-                {
-                    if (q + r >= -chunkSize && q + r <= chunkSize)
-                    {
-                        if (minBounds.q > q)
-                        {
-                            minBounds.q = q;
-                        }
-                        if (maxBounds.q < q)
-                        {
-                            maxBounds.q = q;
-                        }
-
-                        if (minBounds.r > r)
-                        {
-                            minBounds.r = r;
-                        }
-                        if (maxBounds.r < r)
-                        {
-                            maxBounds.r = r;
-                        }
-
-                        gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                    }
-                }
-            }
-        }
-
-        private void PopulateRectangleGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = -chunkSize; q <= chunkSize; q++)
-            {
-                for (int r = -chunkSize; r <= chunkSize; r++)
-                {
-                    if (minBounds.q > q)
-                    {
-                        minBounds.q = q;
-                    }
-                    if (maxBounds.q < q)
-                    {
-                        maxBounds.q = q;
-                    }
-
-                    if (minBounds.r > r)
-                    {
-                        minBounds.r = r;
-                    }
-                    if (maxBounds.r < r)
-                    {
-                        maxBounds.r = r;
-                    }
-
-                    gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                }
-            }
-        }
-
-        private void PopulateTriangleGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = 0; q <= chunkSize; q++)
-            {
-                for (int r = 0; r <= chunkSize - q; r++)
-                {
-                    if (minBounds.q > q)
-                    {
-                        minBounds.q = q;
-                    }
-                    if (maxBounds.q < q)
-                    {
-                        maxBounds.q = q;
-                    }
-
-                    if (minBounds.r > r)
-                    {
-                        minBounds.r = r;
-                    }
-                    if (maxBounds.r < r)
-                    {
-                        maxBounds.r = r;
-                    }
-
-                    gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                }
-            }
-        }
-
-        private void PopulateHexagonRingGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = -chunkSize; q <= chunkSize; q++)
-            {
-                for (int r = -chunkSize; r <= chunkSize; r++)
-                {
-                    if (math.abs(q + r) == chunkSize)
-                    {
-                        if (minBounds.q > q)
-                        {
-                            minBounds.q = q;
-                        }
-                        if (maxBounds.q < q)
-                        {
-                            maxBounds.q = q;
-                        }
-
-                        if (minBounds.r > r)
-                        {
-                            minBounds.r = r;
-                        }
-                        if (maxBounds.r < r)
-                        {
-                            maxBounds.r = r;
-                        }
-
-                        gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                    }
-                }
-            }
+            Entity e = EntityManager.CreateEntity();
+            EntityManager.AddComponent<GenerateSystemMapRequestFlag>(e);
         }
 
         protected override void OnUpdate()
@@ -248,7 +43,45 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
 
         protected void HighlightCurrentHexagon()
         {
+            SystemMapFocusHexagonData focusedHex = SystemAPI.GetSingleton<SystemMapFocusHexagonData>();
             
+            FixedString64Bytes propertyName = new FixedString64Bytes("_HighlightedAxialCoords");
+            float4 shaderValue = new float4(focusedHex.coord.q, focusedHex.coord.r, 0, 0);
+            
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+            mpb.SetVector("_HighlightedAxialCoords", shaderValue);
+
+            if (SystemAPI.TryGetSingletonEntity<HexTechMapEntityTag>(out Entity mapEntity))
+            {
+                //Debug.Log("Coord: " + shaderValue);
+
+                // EntityManager.AddComponentData(mapEntity, new HighlightAxialCoords
+                // {
+                //     Value = new float4(0.0f, 1.0f, 0.0f, 1.0f)
+                // });
+
+                // Renderer renderer = EntityManager.GetComponentObject<Renderer>(mapEntity);
+
+                // if (renderer == null)
+                // {
+                //     // This entity doesn't have a UnityEngine.Renderer component instance.
+                //     // This might happen if it's a pure DOTS entity not yet fully processed by Hybrid Renderer,
+                //     // or if the setup is incorrect.
+                //     Debug.LogWarning($"Entity {mapEntity.ToString()} with HexGridTag does not have a UnityEngine.Renderer.");
+                //     return; // Skip this entity
+                // }
+
+                // MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
+                // // Get all other property values to not change any other values
+                // renderer.GetPropertyBlock(materialPropertyBlock, 0);
+                // // Update the highlighted value
+                // materialPropertyBlock.SetVector("_HighlightedAxialCoords", shaderValue);
+                // // Send the updated values to the renderer
+                // renderer.SetPropertyBlock(materialPropertyBlock, 0);
+                
+
+                
+            }
         }
 
         protected void HandleStartPathFinding()

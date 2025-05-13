@@ -1,8 +1,10 @@
 using GalacticBoundStudios.HexTech;
 using GalacticBoundStudios.HexTech.MapGeneration;
+using GalacticBoundStudios.HexTech.Shaders;
 using GalacticBoundStudios.RTSCamera;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -70,6 +72,8 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
                     Debug.Log("inputSystem.HexMap.Click.triggered");
                     SystemAPI.GetSingletonRW<SystemMapSelectedHexagonData>().ValueRW.coord = coord;
                 }
+
+                SystemAPI.GetSingletonRW<HighlightedAxialCoordsVector4Override>().ValueRW.Value = new float4(coord.q, coord.r, 0, 0);
 
                 // if (inputSystem.HexMap.SetPathStart.triggered)
                 // {
