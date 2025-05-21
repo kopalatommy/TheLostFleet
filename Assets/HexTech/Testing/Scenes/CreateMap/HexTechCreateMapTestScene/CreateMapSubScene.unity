@@ -119,6 +119,92 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &88541194
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 175061494613375999, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4023984000404311122, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+      propertyPath: m_Name
+      value: MapEntityPrefab
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
+--- !u!114 &264990072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementSpeed: 20
+  rotationSpeed: 50
+  mouseRotationSpeed: 100
+  zoomSpeed: 10
+  edgeMoveThreshold: 0.05
+  addBounds: 0
+  minBounds:
+    x: -100
+    y: 5
+    z: -100
+  maxBounds:
+    x: 100
+    y: 50
+    z: 100
+  rotationBounds:
+    x: -88
+    y: 88
 --- !u!1 &429417376
 GameObject:
   m_ObjectHideFlags: 0
@@ -194,7 +280,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12a21388162167d4abd48d6308b839ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  config: {fileID: 1600437434}
+  config: {fileID: 264990072}
 --- !u!1 &934625745
 GameObject:
   m_ObjectHideFlags: 0
@@ -286,35 +372,6 @@ MonoBehaviour:
   prefab:
     key: MapEntity
     prefab: {fileID: 4023984000404311122, guid: ffd5b129c8c4dd746a23e1f1112f3d48, type: 3}
---- !u!114 &1600437434
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  movementSpeed: 20
-  rotationSpeed: 50
-  mouseRotationSpeed: 100
-  zoomSpeed: 10
-  edgeMoveThreshold: 0.05
-  addBounds: 0
-  minBounds:
-    x: -100
-    y: 5
-    z: -100
-  maxBounds:
-    x: 100
-    y: 50
-    z: 100
-  rotationBounds:
-    x: -88
-    y: 88
 --- !u!1 &1810944973
 GameObject:
   m_ObjectHideFlags: 0
@@ -403,3 +460,4 @@ SceneRoots:
   - {fileID: 429417377}
   - {fileID: 1983462333}
   - {fileID: 934625747}
+  - {fileID: 88541194}

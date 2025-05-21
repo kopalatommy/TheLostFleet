@@ -1,3 +1,4 @@
+using GalacticBoundStudios.EchoesOfTheFarRim.SystemMap;
 using GalacticBoundStudios.HexTech;
 using GalacticBoundStudios.HexTech.MapGeneration;
 using GalacticBoundStudios.MeshMania;
@@ -63,6 +64,11 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim
                 PopulateHexGrid(HexTechGridShape.Hexagon, ref activationGrid, 15, ref minBounds, ref maxBounds);
                 EntityManager.AddComponentData(mapEntity, activationGrid);
 
+                RefRW<SystemMapMovementCostData> movementCostData = SystemAPI.GetSingletonRW<SystemMapMovementCostData>();
+                AssignMovementCosts(ref activationGrid, movementCostData.ValueRW.Value);
+
+
+
                 Mesh mesh = new Mesh();
                 mesh.vertices = new[] { Vector3.up * 1000, Vector3.left * 1000, Vector3.right * 1000, -Vector3.up * 1000 };
                 mesh.triangles = new[] { 0, 1, 2, 1, 2, 3 };
@@ -101,6 +107,15 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim
                 {
                     index = mesh.GetInstanceID()
                 });
+            }
+        }
+
+        private void AssignMovementCosts(ref HexagonActivationGrid activationGrid, NativeHashMap<HexCoord, float> movementCostMap)
+        {
+            NativeArray<HexCoord> mapHexagons = activationGrid.hexGrid.GetKeyArray(Allocator.Temp);
+
+            foreach (HexCoord coord in mapHexagons) {
+                movementCostMap.Add(coord, 1.0f);
             }
         }
 

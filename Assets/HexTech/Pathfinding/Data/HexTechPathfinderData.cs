@@ -13,8 +13,17 @@ namespace GalacticBoundStudios.HexTech.PathFinding
 
     // This component is attached to a component when a path request is complete
     // The resulting path will include the current tile that the entity is on
-    public struct HexTechMapPath : IComponentData
+    public struct HexTechMapPath : IBufferElementData
     {
-        public NativeList<HexCoord> path;
+        public HexCoord Value;
+
+        public static implicit operator HexCoord(HexTechMapPath e)
+        {
+            return e.Value;
+        }
+        public static implicit operator HexTechMapPath(HexCoord e)
+        {
+            return new HexTechMapPath { Value = e };
+        }
     }
 }

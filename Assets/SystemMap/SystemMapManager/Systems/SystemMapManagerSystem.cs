@@ -25,6 +25,12 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
         protected override void OnCreate()
         {
             RequireForUpdate<SystemMapEnableFlag>();
+
+            Entity mapCostData = EntityManager.CreateEntity(typeof(SystemMapMovementCostData));
+            EntityManager.SetComponentData(mapCostData, new SystemMapMovementCostData
+            {
+                Value = new NativeHashMap<HexCoord, float>(100, Allocator.Persistent)
+            });
         }
 
         protected void CreateGenerateMapRequest()

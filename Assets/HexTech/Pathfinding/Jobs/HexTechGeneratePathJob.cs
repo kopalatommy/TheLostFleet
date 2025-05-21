@@ -1,17 +1,15 @@
-using System.Linq;
 using GalacticBoundStudios.DataScribes.Managed;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
+using UnityEngine;
 
 namespace GalacticBoundStudios.HexTech.PathFinding
 {
-    [BurstCompile]
-    // Uses the A* algorithm to build a path between the given nodes
-    public partial struct HexTechCreatePathJob : IJobEntity
+    public partial struct HexTechCreatePathJobSingle : IJob
     {
-        [BurstCompile]
         struct PathStep : System.IComparable<PathStep>, System.IEquatable<PathStep>
         {
             public HexCoord step;
@@ -30,37 +28,45 @@ namespace GalacticBoundStudios.HexTech.PathFinding
             }
         }
 
+        public HexTechCreatePathRequest request;
+        public NativeList<HexCoord> resultPath;
+        public Entity requester;
         [ReadOnly]
         public NativeHashMap<HexCoord, float> costMap;
 
-        public EntityCommandBuffer.ParallelWriter entityCommandBuffer;
-
-        public void Execute(HexTechCreatePathAspect aspect)
+        public void Execute()
         {
-            NativeList<HexCoord> path = FindPath(aspect.pathRequest.ValueRO.startPos, aspect.pathRequest.ValueRO.endPos);
-            
-            entityCommandBuffer.RemoveComponent<HexTechCreatePathRequest>(aspect.entity.Index, aspect.entity);
-            entityCommandBuffer.AddComponent<HexTechMapPath>(aspect.entity.Index, aspect.entity, new HexTechMapPath()
-            {
-                path = path
-            });
+            Debug.Log("Finding path from: " + request.startPos + " -> " + request.endPos);
+
+            FindPath(request.startPos, request.endPos);
         }
 
-        public NativeList<HexCoord> FindPath(HexCoord start, HexCoord goal)
+        public void FindPath(HexCoord start, HexCoord goal)
         {
-            NativePriorityQueue<PathStep> openQueue = new NativePriorityQueue<PathStep>(Allocator.TempJob);
-            NativeHashMap<HexCoord, HexCoord> pathStepMap = new NativeHashMap<HexCoord, HexCoord>(128, Allocator.TempJob);
+            NativePriorityQueue<PathStep> openQueue = new NativePriorityQueue<PathStep>(Allocator.Temp);
+            NativeHashMap<HexCoord, HexCoord> pathStepMap = new NativeHashMap<HexCoord, HexCoord>(128, Allocator.Temp);
 
-            NativeArray<HexCoord> neighborsArray = new NativeArray<HexCoord>(6, Allocator.TempJob);
+            NativeArray<HexCoord> neighborsArray = new NativeArray<HexCoord>(6, Allocator.Temp);
 
-            while (!openQueue.IsEmpty) {
+            openQueue.Add(new PathStep
+            {
+                step = start,
+                cost = 0
+            });
+
+            while (!openQueue.IsEmpty)
+            {
                 PathStep currentStep = openQueue.Dequeue();
 
-                if (currentStep.step.Equals(goal)) {
+                if (currentStep.step.Equals(goal))
+                {
+                    RebuildPath(start, goal, pathStepMap);
+
                     openQueue.Dispose();
                     pathStepMap.Dispose();
                     neighborsArray.Dispose();
-                    return RebuildPath(start, goal, pathStepMap);
+
+                    return;
                 }
 
                 GetNeighbors(currentStep.step, neighborsArray);
@@ -69,7 +75,12 @@ namespace GalacticBoundStudios.HexTech.PathFinding
                 for (int i = 0; i < 6; i++)
                 {
                     // Skip nodes that have already been accessed
-                    if (pathStepMap.ContainsKey(neighborsArray[i])) {
+                    if (pathStepMap.ContainsKey(neighborsArray[i]))
+                    {
+                        continue;
+                    }
+                    if (!costMap.ContainsKey(neighborsArray[i]))
+                    {
                         continue;
                     }
 
@@ -83,7 +94,8 @@ namespace GalacticBoundStudios.HexTech.PathFinding
                     pathStepMap.Add(neighborsArray[i], currentStep.step);
 
                     // Resize the path map if at capacity
-                    if (pathStepMap.Capacity == pathStepMap.Count) {
+                    if (pathStepMap.Capacity == pathStepMap.Count)
+                    {
                         pathStepMap.Capacity += 128;
                     }
                 }
@@ -92,8 +104,6 @@ namespace GalacticBoundStudios.HexTech.PathFinding
             openQueue.Dispose();
             pathStepMap.Dispose();
             neighborsArray.Dispose();
-
-            return new NativeList<HexCoord>(Allocator.Persistent);
         }
 
         private float Heuristic(HexCoord coord, HexCoord goal)
@@ -111,24 +121,36 @@ namespace GalacticBoundStudios.HexTech.PathFinding
             neighborsArray[5] = HexMath.Add(coord, new HexCoord(-1, 1));
         }
 
-        private NativeList<HexCoord> RebuildPath(HexCoord start, HexCoord goal, NativeHashMap<HexCoord,HexCoord> pathStepMap)
+        private void RebuildPath(HexCoord start, HexCoord goal, NativeHashMap<HexCoord, HexCoord> pathStepMap)
         {
-            NativeList<HexCoord> path = new NativeList<HexCoord>(Allocator.Persistent);
-
             // Rebuild the path from end to start, until the current node is the start
             while (!goal.Equals(start))
             {
                 // Add the current node to the path
-                path.Add(goal);
+                resultPath.Add(goal);
                 // Get the predecessor
-                goal = pathStepMap[goal];
+                HexCoord next = pathStepMap[goal];
+                goal = next;
             }
             // Add the start node because it has not yet been added
-            path.Add(start);
+            resultPath.Add(start);
             // Reverse the path because it was built in reverse
-            path.Reverse();
-            // Return the resulting path
-            return path;
+            ReverseList(resultPath);
+        }
+
+        private void ReverseList(NativeList<HexCoord> list)
+        {
+            int s = 0;
+            int e = list.Length - 1;
+
+            while (s < e)
+            {
+                HexCoord t = list[s];
+                list[s] = list[e];
+                list[e] = t;
+                s++;
+                e--;
+            }
         }
     }
 }

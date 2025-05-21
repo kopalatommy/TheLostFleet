@@ -1,11 +1,15 @@
 using GalacticBoundStudios.HexTech;
 using GalacticBoundStudios.HexTech.MapGeneration;
+using GalacticBoundStudios.HexTech.PathFinding;
 using GalacticBoundStudios.HexTech.Shaders;
 using GalacticBoundStudios.RTSCamera;
+using GalacticBoundStudios.RTSCore;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,6 +18,8 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
     public partial class SystemMapInputCollectorSystem : SystemBase
     {
         static RTSCameraInputActions inputSystem;
+
+        private EntityQuery selectedUnitsQuery;
 
         protected override void OnCreate()
         {
@@ -27,6 +33,11 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
 
             inputSystem = new RTSCameraInputActions();
             inputSystem.Enable();
+
+            selectedUnitsQuery = GetEntityQuery(
+                ComponentType.ReadOnly<SelectableTag>(),
+                ComponentType.ReadOnly<SelectedTag>()
+            );
         }
 
         protected override void OnDestroy()
@@ -46,6 +57,9 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
         protected void HandleCameraInput()
         {
             RefRW<HexMapTransformData> mapConfigData = SystemAPI.GetSingletonRW<HexMapTransformData>();
+
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+            EntityCommandBuffer.ParallelWriter parallelWriter = ecb.AsParallelWriter();
 
             foreach (var moveData in SystemAPI.Query<RTSCameraAspect>()) {
                 moveData.moveData.ValueRW.horizontalMovement = ReadHorizontalMovement(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
@@ -71,9 +85,23 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
                 {
                     Debug.Log("inputSystem.HexMap.Click.triggered");
                     SystemAPI.GetSingletonRW<SystemMapSelectedHexagonData>().ValueRW.coord = coord;
+
+                    
+
+                    Entities.WithAll<SelectedTag, SelectableTag>().ForEach((Entity entity, in SelectableTag selectable, in SelectedTag selected) => {
+                        parallelWriter.AddComponent(entity.Index, entity, new HexTechCreatePathRequest
+                        {
+                            startPos = new HexCoord(0, 0),
+                            endPos = coord
+                        });
+                    }).Run();
                 }
 
                 SystemAPI.GetSingletonRW<HighlightedAxialCoordsVector4Override>().ValueRW.Value = new float4(coord.q, coord.r, 0, 0);
+
+
+
+
 
                 // if (inputSystem.HexMap.SetPathStart.triggered)
                 // {
@@ -91,6 +119,9 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
                 //     HexMapManager.Instance.startPathFinder?.Invoke();
                 // }
             }
+
+            ecb.Playback(EntityManager);
+            ecb.Dispose();
         }
 
         public float3 DetermineRayIntersection(in Ray ray)

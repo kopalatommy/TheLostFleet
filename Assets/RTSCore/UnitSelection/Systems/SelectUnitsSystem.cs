@@ -47,8 +47,6 @@ namespace GalacticBoundStudios.RTSCore
 
         protected override void OnUpdate()
         {
-            Debug.Log("UnitSelectionSystem.OnUpdate");
-
             Mouse mouse = Mouse.current;
 
             if (mainCamera == null)
