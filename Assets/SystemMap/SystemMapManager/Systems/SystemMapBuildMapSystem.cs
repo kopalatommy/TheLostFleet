@@ -54,20 +54,22 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim
                     innerRadius = 0.85f
                 });
 
-                HexagonActivationGrid activationGrid = new HexagonActivationGrid
-                {
-                    hexGrid = new NativeHashMap<HexCoord, byte>(100, Allocator.Persistent),
-                    randomSeed = (uint)System.DateTime.Now.Ticks,
-                };
                 HexCoord minBounds = new HexCoord { q = int.MaxValue, r = int.MaxValue };
                 HexCoord maxBounds = new HexCoord { q = int.MinValue, r = int.MinValue };
-                PopulateHexGrid(HexTechGridShape.Hexagon, ref activationGrid, 15, ref minBounds, ref maxBounds);
+                HexagonActivationGrid activationGrid = HexTechMapGenerationUtils.CreateDefaultMap(HexTechGridShape.Hexagon, 15, ref minBounds, ref maxBounds, Allocator.Persistent);
+
+                // HexagonActivationGrid activationGrid = new HexagonActivationGrid
+                // {
+                //     hexGrid = new NativeHashMap<HexCoord, byte>(100, Allocator.Persistent),
+                //     randomSeed = (uint)System.DateTime.Now.Ticks,
+                // };
+                // HexCoord minBounds = new HexCoord { q = int.MaxValue, r = int.MaxValue };
+                // HexCoord maxBounds = new HexCoord { q = int.MinValue, r = int.MinValue };
+                // PopulateHexGrid(HexTechGridShape.Hexagon, ref activationGrid, 15, ref minBounds, ref maxBounds);
                 EntityManager.AddComponentData(mapEntity, activationGrid);
 
                 RefRW<SystemMapMovementCostData> movementCostData = SystemAPI.GetSingletonRW<SystemMapMovementCostData>();
                 AssignMovementCosts(ref activationGrid, movementCostData.ValueRW.Value);
-
-
 
                 Mesh mesh = new Mesh();
                 mesh.vertices = new[] { Vector3.up * 1000, Vector3.left * 1000, Vector3.right * 1000, -Vector3.up * 1000 };
@@ -116,147 +118,6 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim
 
             foreach (HexCoord coord in mapHexagons) {
                 movementCostMap.Add(coord, 1.0f);
-            }
-        }
-
-        private void PopulateHexGrid(HexTechGridShape gridShape, ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            switch (gridShape)
-            {
-                case HexTechGridShape.Hexagon:
-                    PopulateHexagonGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-                case HexTechGridShape.Rectangle:
-                    PopulateRectangleGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-                case HexTechGridShape.Triangle:
-                    PopulateTriangleGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-                case HexTechGridShape.HexagonRing:
-                    PopulateHexagonRingGrid(ref gridData, chunkSize, ref minBounds, ref maxBounds);
-                    break;
-            }
-        }
-
-        private void PopulateHexagonGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = -chunkSize; q <= chunkSize; q++)
-            {
-                for (int r = -chunkSize; r <= chunkSize; r++)
-                {
-                    if (q + r >= -chunkSize && q + r <= chunkSize)
-                    {
-                        if (minBounds.q > q)
-                        {
-                            minBounds.q = q;
-                        }
-                        if (maxBounds.q < q)
-                        {
-                            maxBounds.q = q;
-                        }
-
-                        if (minBounds.r > r)
-                        {
-                            minBounds.r = r;
-                        }
-                        if (maxBounds.r < r)
-                        {
-                            maxBounds.r = r;
-                        }
-
-                        gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                    }
-                }
-            }
-        }
-
-        private void PopulateRectangleGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = -chunkSize; q <= chunkSize; q++)
-            {
-                for (int r = -chunkSize; r <= chunkSize; r++)
-                {
-                    if (minBounds.q > q)
-                    {
-                        minBounds.q = q;
-                    }
-                    if (maxBounds.q < q)
-                    {
-                        maxBounds.q = q;
-                    }
-
-                    if (minBounds.r > r)
-                    {
-                        minBounds.r = r;
-                    }
-                    if (maxBounds.r < r)
-                    {
-                        maxBounds.r = r;
-                    }
-
-                    gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                }
-            }
-        }
-
-        private void PopulateTriangleGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = 0; q <= chunkSize; q++)
-            {
-                for (int r = 0; r <= chunkSize - q; r++)
-                {
-                    if (minBounds.q > q)
-                    {
-                        minBounds.q = q;
-                    }
-                    if (maxBounds.q < q)
-                    {
-                        maxBounds.q = q;
-                    }
-
-                    if (minBounds.r > r)
-                    {
-                        minBounds.r = r;
-                    }
-                    if (maxBounds.r < r)
-                    {
-                        maxBounds.r = r;
-                    }
-
-                    gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                }
-            }
-        }
-
-        private void PopulateHexagonRingGrid(ref HexagonActivationGrid gridData, int chunkSize, ref HexCoord minBounds, ref HexCoord maxBounds)
-        {
-            for (int q = -chunkSize; q <= chunkSize; q++)
-            {
-                for (int r = -chunkSize; r <= chunkSize; r++)
-                {
-                    if (math.abs(q + r) == chunkSize)
-                    {
-                        if (minBounds.q > q)
-                        {
-                            minBounds.q = q;
-                        }
-                        if (maxBounds.q < q)
-                        {
-                            maxBounds.q = q;
-                        }
-
-                        if (minBounds.r > r)
-                        {
-                            minBounds.r = r;
-                        }
-                        if (maxBounds.r < r)
-                        {
-                            maxBounds.r = r;
-                        }
-
-                        gridData.hexGrid.Add(new HexCoord { q = q, r = r }, 1);
-                    }
-                }
             }
         }
     }

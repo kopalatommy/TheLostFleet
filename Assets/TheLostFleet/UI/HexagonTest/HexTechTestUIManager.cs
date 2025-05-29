@@ -3,7 +3,7 @@ using TMPro;
 using GalacticBoundStudios.HexTech;
 using Unity.Mathematics;
 using Unity.Entities;
-using GalacticBoundStudios.RTSCamera;
+using GalacticBoundStudios.BattleBrain.CameraControls;
 using Unity.Collections;
 using Unity.Transforms;
 using UnityEngine.UI;

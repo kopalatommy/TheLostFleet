@@ -1,20 +1,26 @@
 using Unity.Mathematics;
 using Unity.Entities;
 using GalacticBoundStudios.DataScribes;
+using Unity.Collections;
 
 namespace GalacticBoundStudios.MeshMania
 {
     public struct MeshData : IComponentData
     {
-        public FixedArray<float3> vertices;
-        public FixedArray<int> triangles;
-        public FixedArray<float3> normals;
-        public FixedArray<float4> colors;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float3> vertices;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int> triangles;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float3> normals;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float4> colors;
         //public FixedArray<float2> uvs;
 
         // This is used to embed meta data in the mesh
         public bool addUV2;
-        public FixedArray<float4> uv2;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float4> uv2;
     }
 
     // This data is used to update the correct mesh data

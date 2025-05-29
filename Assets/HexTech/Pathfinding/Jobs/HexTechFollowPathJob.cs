@@ -25,14 +25,11 @@ namespace GalacticBoundStudios.HexTech.PathFinding
             {
                 HexCoord targetPos = pathBuffer[0].Value;
 
-                Debug.Log("Moving entity to " + targetPos + " DeltaTime: " + deltaTime);
-
                 float2 pos = HexMath.HexToPixel(targetPos, in mapConfig);
                 float3 worldPos = new float3(pos.x, 0, pos.y);
 
                 float3 dir = worldPos - localTransform.Position;
 
-                Debug.Log("Distance to point: " + math.length(dir));
                 // If close to point, snap to the position
                 if (math.length(dir) < deltaTime)
                 {
@@ -51,12 +48,14 @@ namespace GalacticBoundStudios.HexTech.PathFinding
                     ecb.SetComponent(e.Index, e, newTransform);
                 }
 
-
+                ecb.SetComponent(e.Index, e, new HexTechMapEntityTag
+                {
+                    gridPosition = targetPos
+                });
             }
 
             if (pathBuffer.IsEmpty)
             {
-                Debug.Log("Entity finished path");
                 ecb.RemoveComponent<HexTechMapPath>(e.Index, e);
             }
         }

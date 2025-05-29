@@ -1,7 +1,7 @@
 using GalacticBoundStudios.HexTech;
 using GalacticBoundStudios.HexTech.MapGeneration;
 using GalacticBoundStudios.MeshMania;
-using GalacticBoundStudios.RTSCore;
+using GalacticBoundStudios.BattleBrain;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -10,6 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using GalacticBoundStudios.HexTech.PathFinding;
 
 namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
 {
@@ -32,18 +33,10 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
                 Value = new NativeHashMap<HexCoord, float>(100, Allocator.Persistent)
             });
         }
-
-        protected void CreateGenerateMapRequest()
-        {
-            Debug.Log("SystemMapManagerSystem.CreateGenerateMapRequest");
-
-            Entity e = EntityManager.CreateEntity();
-            EntityManager.AddComponent<GenerateSystemMapRequestFlag>(e);
-        }
-
+        
         protected override void OnUpdate()
         {
-            HighlightCurrentHexagon();
+            // HighlightCurrentHexagon();
             HandleStartPathFinding();
         }
 

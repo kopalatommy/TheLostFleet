@@ -1,5 +1,5 @@
 using GalacticBoundStudios.HexTech.PathFinding;
-using GalacticBoundStudios.RTSCore;
+using GalacticBoundStudios.BattleBrain;
 using Unity.Entities;
 using UnityEngine;
 using Unity.Mathematics;

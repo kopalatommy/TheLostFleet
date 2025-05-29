@@ -2,8 +2,8 @@ using GalacticBoundStudios.HexTech;
 using GalacticBoundStudios.HexTech.MapGeneration;
 using GalacticBoundStudios.HexTech.PathFinding;
 using GalacticBoundStudios.HexTech.Shaders;
-using GalacticBoundStudios.RTSCamera;
-using GalacticBoundStudios.RTSCore;
+using GalacticBoundStudios.BattleBrain.CameraControls;
+using GalacticBoundStudios.BattleBrain;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -21,10 +21,18 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
 
         private EntityQuery selectedUnitsQuery;
 
+
+        // Used to get the camera entity singleton
+        private EntityQuery cameraSingletonQuery;
+        private EntityQuery mapConfigQuery;
+
+        // This is the query that is used to determine if this can update
+        private EntityQuery updateQuery;
+
         protected override void OnCreate()
         {
-            RequireForUpdate<SystemMapEnableFlag>();
-            RequireForUpdate<HexMapTransformData>();
+            updateQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<SystemMapEnableFlag>().WithAll<HexMapTransformData>().Build(EntityManager);
+            RequireForUpdate(updateQuery);
 
             Entity inputDataEntity = EntityManager.CreateEntity(typeof(SystemMapInputData));
             Entity rtsInputEntity = EntityManager.CreateEntity(typeof(RTSCameraMoveData));
@@ -38,6 +46,9 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
                 ComponentType.ReadOnly<SelectableTag>(),
                 ComponentType.ReadOnly<SelectedTag>()
             );
+
+            cameraSingletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<RTSCameraMovementSettings>().Build(EntityManager);
+            mapConfigQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<HexMapTransformData>().Build(EntityManager);
         }
 
         protected override void OnDestroy()
@@ -56,72 +67,97 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
 
         protected void HandleCameraInput()
         {
-            RefRW<HexMapTransformData> mapConfigData = SystemAPI.GetSingletonRW<HexMapTransformData>();
-
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
             EntityCommandBuffer.ParallelWriter parallelWriter = ecb.AsParallelWriter();
 
-            foreach (var moveData in SystemAPI.Query<RTSCameraAspect>()) {
-                moveData.moveData.ValueRW.horizontalMovement = ReadHorizontalMovement(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
-                moveData.moveData.ValueRW.horizontalMovement += ReadEdgeScrolling(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
-                moveData.moveData.ValueRW.zoom = ReadZoom();
-                moveData.moveData.ValueRW.rotation = ReadRotation(moveData.localTransform.ValueRO) + ReadMouseRotation();
+            Entity cameraEntity = cameraSingletonQuery.GetSingletonEntity();
 
-                Ray ray;
-                HexCoord coord;
-                if (moveData.cameraSettings.ValueRO.orthographic)
-                {
-                    ray = CameraUtilities.ScreenPointToRay_Orthographic(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), moveData.cameraSettings.ValueRO.aspect, moveData.localTransform.ValueRO.Position, moveData.localTransform.ValueRO.Rotation, moveData.cameraSettings.ValueRO.orthographicSize, moveData.localTransform.ValueRO.Forward());
-                }
-                else
-                {
-                    ray = CameraUtilities.ScreenPointToRay_Standard(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), moveData.cameraSettings.ValueRO.fieldOfView, moveData.cameraSettings.ValueRO.aspect, moveData.localTransform.ValueRO.Position, moveData.localTransform.ValueRO.Rotation);
-                }
-                float3 intersection = DetermineRayIntersection(ray);
-                coord = HexMath.PixelToHex(new float2(intersection.x, intersection.z), mapConfigData.ValueRO);
-                SystemAPI.GetSingletonRW<SystemMapFocusHexagonData>().ValueRW.coord = coord;
-
-                if (inputSystem.HexMap.Click.triggered)
-                {
-                    Debug.Log("inputSystem.HexMap.Click.triggered");
-                    SystemAPI.GetSingletonRW<SystemMapSelectedHexagonData>().ValueRW.coord = coord;
-
-                    
-
-                    Entities.WithAll<SelectedTag, SelectableTag>().ForEach((Entity entity, in SelectableTag selectable, in SelectedTag selected) => {
-                        parallelWriter.AddComponent(entity.Index, entity, new HexTechCreatePathRequest
-                        {
-                            startPos = new HexCoord(0, 0),
-                            endPos = coord
-                        });
-                    }).Run();
-                }
-
-                SystemAPI.GetSingletonRW<HighlightedAxialCoordsVector4Override>().ValueRW.Value = new float4(coord.q, coord.r, 0, 0);
+            UpdateCameraMoveData(cameraEntity);
+            HandleMouseInput(cameraEntity, parallelWriter);
 
 
 
 
 
-                // if (inputSystem.HexMap.SetPathStart.triggered)
-                // {
-                //     Debug.Log("Setting path start to: " + currentCoord);
-                //     HexMapManager.Instance.setPathStartPos?.Invoke(currentCoord);
-                // }
-                // if (inputSystem.HexMap.SetPathEnd.triggered)
-                // {
-                //     Debug.Log("Setting path end to: " + currentCoord);
-                //     HexMapManager.Instance.setPathEndPos?.Invoke(currentCoord);
-                // }
-                // if (inputSystem.HexMap.StartPathFinding.triggered)
-                // {
-                //     Debug.Log("Calculating path");
-                //     HexMapManager.Instance.startPathFinder?.Invoke();
-                // }
-            }
+
+
+
+            // foreach (var moveData in SystemAPI.Query<RTSCameraAspect>()) {
+            //     moveData.moveData.ValueRW.horizontalMovement = ReadHorizontalMovement(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
+            //     moveData.moveData.ValueRW.horizontalMovement += ReadEdgeScrolling(moveData.movementSettings.ValueRO, moveData.localTransform.ValueRO);
+            //     moveData.moveData.ValueRW.zoom = ReadZoom();
+            //     moveData.moveData.ValueRW.rotation = ReadRotation(moveData.localTransform.ValueRO) + ReadMouseRotation();
+
+            //     Ray ray;
+            //     HexCoord coord;
+            //     if (moveData.cameraSettings.ValueRO.orthographic)
+            //     {
+            //         ray = CameraUtilities.ScreenPointToRay_Orthographic(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), moveData.cameraSettings.ValueRO.aspect, moveData.localTransform.ValueRO.Position, moveData.localTransform.ValueRO.Rotation, moveData.cameraSettings.ValueRO.orthographicSize, moveData.localTransform.ValueRO.Forward());
+            //     }
+            //     else
+            //     {
+            //         ray = CameraUtilities.ScreenPointToRay_Standard(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), moveData.cameraSettings.ValueRO.fieldOfView, moveData.cameraSettings.ValueRO.aspect, moveData.localTransform.ValueRO.Position, moveData.localTransform.ValueRO.Rotation);
+            //     }
+            //     float3 intersection = DetermineRayIntersection(ray);
+            //     coord = HexMath.PixelToHex(new float2(intersection.x, intersection.z), mapConfigData.ValueRO);
+            //     SystemAPI.GetSingletonRW<SystemMapFocusHexagonData>().ValueRW.coord = coord;
+
+            //     if (inputSystem.HexMap.Click.triggered)
+            //     {
+            //         Debug.Log("inputSystem.HexMap.Click.triggered");
+            //         SystemAPI.GetSingletonRW<SystemMapSelectedHexagonData>().ValueRW.coord = coord;
+
+            //         Entities.WithAll<SelectedTag, SelectableTag, HexTechMapEntityTag>().ForEach((Entity entity, in SelectableTag selectable, in SelectedTag selected, in HexTechMapEntityTag mapEntityTag) => {
+            //             parallelWriter.AddComponent(entity.Index, entity, new HexTechCreatePathRequest
+            //             {
+            //                 startPos = mapEntityTag.gridPosition,
+            //                 endPos = coord
+            //             });
+            //         }).Run();
+            //     }
+
+            //     SystemAPI.GetSingletonRW<HighlightedAxialCoordsVector4Override>().ValueRW.Value = new float4(coord.q, coord.r, 0, 0);
+            // }
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
+        }
+
+        void HandleMouseInput(Entity cameraEntity, EntityCommandBuffer.ParallelWriter parallelWriter)
+        {
+            RTSCameraSettings cameraSettings = EntityManager.GetComponentData<RTSCameraSettings>(cameraEntity);
+            HexMapTransformData mapConfigData = mapConfigQuery.GetSingleton<HexMapTransformData>();
+            LocalTransform cameraTransform = EntityManager.GetComponentData<LocalTransform>(cameraEntity);
+
+            Ray ray;
+            HexCoord coord;
+            if (cameraSettings.orthographic)
+            {
+                ray = CameraUtilities.ScreenPointToRay_Orthographic(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation, cameraSettings.orthographicSize, cameraTransform.Forward());
+            }
+            else
+            {
+                ray = CameraUtilities.ScreenPointToRay_Standard(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), cameraSettings.fieldOfView, cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation);
+            }
+            float3 intersection = DetermineRayIntersection(ray);
+            coord = HexMath.PixelToHex(new float2(intersection.x, intersection.z), mapConfigData);
+            SystemAPI.GetSingletonRW<SystemMapFocusHexagonData>().ValueRW.coord = coord;
+
+            if (inputSystem.HexMap.Click.triggered)
+            {
+                Debug.Log("inputSystem.HexMap.Click.triggered");
+                SystemAPI.GetSingletonRW<SystemMapSelectedHexagonData>().ValueRW.coord = coord;
+
+                Entities.WithAll<SelectedTag, SelectableTag, HexTechMapEntityTag>().ForEach((Entity entity, in SelectableTag selectable, in SelectedTag selected, in HexTechMapEntityTag mapEntityTag) => {
+                    parallelWriter.AddComponent(entity.Index, entity, new HexTechCreatePathRequest
+                    {
+                        startPos = mapEntityTag.gridPosition,
+                        endPos = coord
+                    });
+                }).Run();
+            }
+
+            SystemAPI.GetSingletonRW<HighlightedAxialCoordsVector4Override>().ValueRW.Value = new float4(coord.q, coord.r, 0, 0);
         }
 
         public float3 DetermineRayIntersection(in Ray ray)
@@ -147,6 +183,21 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
             Vector3 difference = planePoint - rayOrigin;
             float t = Vector3.Dot(difference, planeNormal) / denominator;
             return t;
+        }
+
+        void UpdateCameraMoveData(Entity cameraEntity)
+        {
+            RTSCameraMovementSettings moveSettings = EntityManager.GetComponentData<RTSCameraMovementSettings>(cameraEntity);
+            LocalTransform cameraTransform = EntityManager.GetComponentData<LocalTransform>(cameraEntity);
+
+            RTSCameraMoveData moveData = new RTSCameraMoveData()
+            {
+                horizontalMovement = ReadHorizontalMovement(moveSettings, cameraTransform) + ReadEdgeScrolling(moveSettings, cameraTransform),
+                zoom = ReadZoom(),
+                rotation = ReadRotation(in cameraTransform) + ReadMouseRotation()
+            };
+
+            EntityManager.SetComponentData(cameraEntity, moveData);
         }
 
         float3 DetermineMoveDirection(in LocalTransform localTransform, in float2 move)
