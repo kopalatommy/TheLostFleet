@@ -4,7 +4,7 @@ using Unity.Entities;
 namespace GalacticBoundStudios.HexTech
 {
     // Stores in Axial coordinates
-    public struct HexCoord : System.IEquatable<HexCoord>
+    public struct HexCoord : System.IEquatable<HexCoord>, IComponentData
     {
         public int q;
         public int r;

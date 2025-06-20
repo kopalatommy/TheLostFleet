@@ -11,9 +11,25 @@ using UnityEngine.Rendering;
 using Unity.Burst;
 using GalacticBoundStudios.DataScribes.Unmanaged;
 using Unity.Assertions;
+using System.Linq;
 
 namespace GalacticBoundStudios.DataScribes.Managed.Trees
 {
+    /// <summary>
+    /// Defines the strategy used to build the k-d tree.
+    /// </summary>
+    public enum BuildStrategy
+    {
+        /// <summary>
+        /// Splits nodes at the geometric center of their bounds. Faster to build, but can result in an unbalanced tree. Best for uniformly distributed data.
+        /// </summary>
+        Midpoint,
+        /// <summary>
+        /// Splits nodes at the median point. Slower to build, but results in a perfectly balanced tree for faster queries. Best for clustered or non-uniform data.
+        /// </summary>
+        Median
+    }
+    
     [BurstCompile]
     [NativeContainer]
     public struct NativeKDTree : IDisposable
@@ -63,68 +79,95 @@ namespace GalacticBoundStudios.DataScribes.Managed.Trees
         }
 
         public bool IsCreated => points.IsCreated;
+        public int Count => points.Length;
 
-        // Holds all of the points in the tree
-        public NativeArray<float3> points;
+        // Holds all of the points in the tree (owned by this struct)
+        [NativeDisableContainerSafetyRestriction]
+        private NativeArray<float3> points;
         // Holds the indices of the points in the tree
+        [NativeDisableContainerSafetyRestriction]
         private NativeArray<int> permutation;
-        // The number of nodes in the tree
-        public int count;
         // The nodes in the tree
+        [NativeDisableContainerSafetyRestriction]
         private NativeList<Node> nodes;
         // The number of nodes in the tree
         private int nodeCount;
         // The number of points that a leaf node can hold
         private int leafCapacity;
+        // The allocator used for the native collections
+        private Allocator allocator;
+        // The strategy for building the tree
+        private BuildStrategy buildStrategy;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal AtomicSafetyHandle m_Safety;
         internal DisposeSentinel m_DisposeSentinel;
 #endif // ENABLE_UNITY_COLLECTIONS_CHECKS
 
-        public NativeKDTree(Allocator allocator)
+        /// <summary>
+        /// Creates a new NativeKDTree.
+        /// </summary>
+        /// <param name="allocator">The allocator to use for the tree's native collections.</param>
+        /// <param name="strategy">The strategy to use for building the tree. Midpoint is faster to build, Median provides faster queries.</param>
+        /// <param name="initialCapacity">The initial capacity of the point array.</param>
+        /// <param name="leafCapacity">The maximum number of points a leaf node can hold.</param>
+        public NativeKDTree(Allocator allocator, BuildStrategy strategy = BuildStrategy.Midpoint, int initialCapacity = 0, int leafCapacity = 32)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (allocator <= Allocator.None)
             {
                 throw new ArgumentException("Allocator must be Temp, TempJob, or Persistent.", nameof(allocator));
             }
-
             DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 1, allocator);
 #endif // ENABLE_UNITY_COLLECTIONS_CHECKS
 
-            points = new NativeArray<float3>(0, allocator);
-            permutation = new NativeArray<int>(0, allocator);
-            nodes = new NativeList<Node>(0, allocator);
-
-            count = 0;
-            nodeCount = 0;
-            leafCapacity = 32;
+            this.points = new NativeArray<float3>(initialCapacity, allocator);
+            this.permutation = new NativeArray<int>(initialCapacity, allocator);
+            this.nodes = new NativeList<Node>(initialCapacity, allocator);
+            this.nodeCount = 0;
+            this.leafCapacity = leafCapacity;
+            this.allocator = allocator;
+            this.buildStrategy = strategy;
         }
 
-        public void SetPoints(NativeArray<float3> points, bool rebuild = true)
+        public void SetPoints(NativeArray<float3> newPoints, bool rebuild = true)
         {
-            this.points = points;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+            // Ensure our internal array is the correct size
+            if (!this.points.IsCreated || this.points.Length != newPoints.Length)
+            {
+                if(this.points.IsCreated) this.points.Dispose();
+                this.points = new NativeArray<float3>(newPoints.Length, allocator);
+            }
+
+            // Copy the data
+            NativeArray<float3>.Copy(newPoints, this.points);
 
             if (rebuild)
             {
                 Rebuild();
             }
         }
-
-        public void AddPoints(NativeArray<float3> points, bool rebuild = true)
+        
+        public void AddPoints(NativeArray<float3> newPoints, bool rebuild = true)
         {
-            this.points.ResizeArray(this.points.Length + points.Length);
-            this.permutation.ResizeArray(this.points.Length);
-
-            int startIndex = this.points.Length - points.Length;
-            for (int i = 0; i < points.Length; i++)
-            {
-                this.points[startIndex + i] = points[i];
-            }
-
-            count++;
-
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+            int oldLength = this.points.Length;
+            int newLength = oldLength + newPoints.Length;
+            
+            // Resize by creating a new array and copying the old data
+            var newPointsArray = new NativeArray<float3>(newLength, allocator);
+            if(oldLength > 0) NativeArray<float3>.Copy(this.points, newPointsArray, oldLength);
+            if(this.points.IsCreated) this.points.Dispose();
+            this.points = newPointsArray;
+            
+            // Copy the new data into the resized array
+            NativeArray<float3>.Copy(newPoints, 0, this.points, oldLength, newPoints.Length);
+            
             if (rebuild)
             {
                 Rebuild();
@@ -133,202 +176,197 @@ namespace GalacticBoundStudios.DataScribes.Managed.Trees
 
         public void Rebuild()
         {
-            NativeQueue<int> buildQueue = new NativeQueue<int>(Allocator.TempJob);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+            if (points.Length == 0)
+            {
+                nodeCount = 0;
+                nodes.Clear();
+                return;
+            }
+
+            if (!permutation.IsCreated || permutation.Length != points.Length)
+            {
+                if(permutation.IsCreated) permutation.Dispose();
+                permutation = new NativeArray<int>(points.Length, allocator);
+            }
 
             ResetPermutation();
 
             // Reset the node count
             nodeCount = 0;
             // Determine the expected number of nodes
-            int nodeCountEstimate = 4 * (int) math.ceil(points.Length / (float) leafCapacity + 1) + 1;
+            int nodeCountEstimate = 2 * (int)math.ceil(points.Length / (float)leafCapacity) + 1;
             // Resize the nodes array if necessary
             if (nodes.Capacity < nodeCountEstimate)
             {
-                nodes.Resize(nodeCountEstimate, NativeArrayOptions.UninitializedMemory);
+                nodes.Capacity = nodeCountEstimate;
             }
+            nodes.Clear();
 
             // Create the root node
             int rootNodeIndex = GetNode();
-            Node curNode = nodes[rootNodeIndex];
-            curNode.bounds = MakeRootBounds();
-            curNode.start = 0;
-            curNode.end = points.Length;
-            nodes[rootNodeIndex] = curNode;
+            Node rootNode = new Node
+            {
+                bounds = MakeRootBounds(),
+                start = 0,
+                end = points.Length,
+                partitionAxis = -1
+            };
+            nodes[rootNodeIndex] = rootNode;
 
-            // Add the root node to the build queue
+            // Use a queue for iterative (non-recursive) build
+            NativeQueue<int> buildQueue = new NativeQueue<int>(Allocator.Temp);
             buildQueue.Enqueue(rootNodeIndex);
 
-            while (!buildQueue.IsEmpty())
+            while (buildQueue.TryDequeue(out int index))
             {
-                int index = buildQueue.Dequeue();
-                SplitNode(index, out int posNodeIndex, out int negNodeIndex, buildQueue);
+                SplitNode(index, buildQueue);
             }
-
+            
             buildQueue.Dispose();
         }
 
-        private void SplitNode(int parentIndex, out int posNodeIndex, out int negNodeIndex, NativeQueue<int> buildQueue)
+        private void SplitNode(int parentIndex, NativeQueue<int> buildQueue)
         {
             Node parent = nodes[parentIndex];
+
+            // If the node is too small, make it a leaf
+            if (parent.Count <= leafCapacity)
+            {
+                return;
+            }
+
             KDBounds parentBounds = parent.bounds;
             float3 parentBoundsSize = parentBounds.size;
 
             // Find the axis where the bounds are the largest
             int splitAxis = 0;
-            float axisSize = parentBoundsSize.x;
+            if (parentBoundsSize.y > parentBoundsSize.x) splitAxis = 1;
+            if (parentBoundsSize.z > parentBoundsSize[splitAxis]) splitAxis = 2;
 
-            if (axisSize < parentBoundsSize.y)
+            int splitIndex;
+            float splitPivot;
+
+            if (buildStrategy == BuildStrategy.Median)
             {
-                splitAxis = 1;
-                axisSize = parentBoundsSize.y;
+                // For Median strategy, we find the actual median point and split there.
+                // This balances the tree perfectly.
+                int medianIndex = parent.start + parent.Count / 2;
+                Select(parent.start, parent.end - 1, medianIndex, splitAxis);
+                splitIndex = medianIndex;
+                splitPivot = points[permutation[splitIndex]][splitAxis];
             }
-            if (axisSize < parentBoundsSize.z)
+            else
             {
-                splitAxis = 2;
-                axisSize = parentBoundsSize.z;
+                // For Midpoint strategy, we split at the geometric center of the node.
+                splitPivot = (parentBounds.minBounds[splitAxis] + parentBounds.maxBounds[splitAxis]) * 0.5f;
+                splitIndex = Partition(parent.start, parent.end, splitPivot, splitAxis);
             }
 
-            // Determine the axis min and max
-            float axisMin = parentBounds.minBounds[splitAxis];
-            float axisMax = parentBounds.maxBounds[splitAxis];
+            // If the partition is not successful (all points on one side), make this a leaf to prevent infinite loops.
+            if (splitIndex == parent.start || splitIndex == parent.end)
+            {
+                return;
+            }
 
-            float splitPivot = CalculateSplitPivot(parent.start, parent.end, axisMin, axisMax, splitAxis);
-
-            // Update the parent node
+            // Update the parent node since it is no longer a leaf
             parent.partitionAxis = splitAxis;
             parent.partitionCoordinate = splitPivot;
-
-            // Partition the points into the negative and positive children
-            int splitIndex = Partition(parent.start, parent.end, splitPivot, splitAxis);
 
             // Create the negative child node
             float3 negativeMax = parentBounds.maxBounds;
             negativeMax[splitAxis] = splitPivot;
-            KDBounds bounds = new KDBounds
+            int negNodeIndex = GetNode();
+            nodes[negNodeIndex] = new Node
             {
-                minBounds = parentBounds.minBounds,
-                maxBounds = negativeMax
+                bounds = new KDBounds { minBounds = parentBounds.minBounds, maxBounds = negativeMax },
+                start = parent.start,
+                end = splitIndex,
+                partitionAxis = -1
             };
-
-            negNodeIndex = GetNode();
-            Node negNode = nodes[negNodeIndex];
-            negNode.bounds = bounds;
-            negNode.start = parent.start;
-            negNode.end = splitIndex;
-            nodes[negNodeIndex] = negNode;
             parent.negativeChildIndex = negNodeIndex;
 
             // Create the positive child node
             float3 positiveMin = parentBounds.minBounds;
             positiveMin[splitAxis] = splitPivot;
-            bounds = parent.bounds;
-
-            bounds.minBounds = positiveMin;
-            posNodeIndex = GetNode();
-            Node posNode = nodes[posNodeIndex];
-            posNode.bounds = bounds;
-            posNode.start = splitIndex;
-            posNode.end = parent.end;
-            nodes[posNodeIndex] = posNode;
+            int posNodeIndex = GetNode();
+            nodes[posNodeIndex] = new Node
+            {
+                bounds = new KDBounds { minBounds = positiveMin, maxBounds = parentBounds.maxBounds },
+                start = splitIndex,
+                end = parent.end,
+                partitionAxis = -1
+            };
             parent.positiveChildIndex = posNodeIndex;
 
-            // Update the parent node
+            // Update the parent node in the list
             nodes[parentIndex] = parent;
 
-            if (ContinueSplitting(parent.start, splitIndex))
-            {
-                buildQueue.Enqueue(negNodeIndex);
-            }
-            if (ContinueSplitting(splitIndex, parent.end))
-            {
-                buildQueue.Enqueue(posNodeIndex);
-            }
+            // Enqueue children to continue splitting
+            buildQueue.Enqueue(negNodeIndex);
+            buildQueue.Enqueue(posNodeIndex);
         }
 
-        private bool ContinueSplitting(int start, int end)
-        {
-            return end - start > leafCapacity;
-        }
-
+        /// <summary>
+        /// Partitions the permutation array for the Midpoint build strategy.
+        /// </summary>
         private int Partition(int start, int end, float pivotPoint, int axis)
         {
-            int leftIndex = start - 1;
-            int rightIndex = end;
-
-            for (;;)
-            {
-                do
-                {
-                    leftIndex++;
-                } while (leftIndex < rightIndex && points[permutation[leftIndex]][axis] < pivotPoint);
-
-                do
-                {
-                    rightIndex--;
-                } while (leftIndex < rightIndex && points[permutation[rightIndex]][axis] >= pivotPoint);
-
-                if (leftIndex < rightIndex)
-                {
-                    int temp = permutation[leftIndex];
-                    permutation[leftIndex] = permutation[rightIndex];
-                    permutation[rightIndex] = temp;
-                }
-                else
-                {
-                    return leftIndex;
-                }
-            }
-        }
-
-        private float CalculateSplitPivot(int start, int end, float axisMin, float axisMax, int splitAxis)
-        {
-            float midPoint = (axisMin + axisMax) * 0.5f;
-
-            bool foundNegative = false;
-            bool foundPositive = false;
-
+            int left = start;
             for (int i = start; i < end; i++)
             {
-                float point = points[permutation[i]][splitAxis];
-
-                if (point < midPoint)
+                if (points[permutation[i]][axis] < pivotPoint)
                 {
-                    foundNegative = true;
+                    (permutation[i], permutation[left]) = (permutation[left], permutation[i]);
+                    left++;
+                }
+            }
+            return left;
+        }
+        
+        /// <summary>
+        /// Reorders the permutation array slice so that the element at the k-th position is the one that would be in that position in a sorted array.
+        /// This is used for the Median build strategy.
+        /// </summary>
+        private void Select(int left, int right, int k, int axis)
+        {
+            while (left < right)
+            {
+                int pivotIndex = PartitionForSelect(left, right, axis);
+                if (k == pivotIndex) return;
+
+                if (k < pivotIndex)
+                {
+                    right = pivotIndex - 1;
                 }
                 else
                 {
-                    foundPositive = true;
+                    left = pivotIndex + 1;
                 }
-
-                if (foundNegative && foundPositive)
-                {
-                    return midPoint;
-                }
-            }
-
-            if (foundNegative)
-            {
-                float negativeMax = float.MinValue;
-
-                for (int i = start; i < end; i++)
-                {
-                    negativeMax = math.max(negativeMax, points[permutation[i]][splitAxis]);
-                }
-
-                return negativeMax;
-            }
-            else
-            {
-                float positiveMin = float.MaxValue;
-
-                for (int i = start; i < end; i++)
-                {
-                    positiveMin = math.min(positiveMin, points[permutation[i]][splitAxis]);
-                }
-
-                return positiveMin;
             }
         }
+        
+        /// <summary>
+        /// A partition function used by the Select method (based on Lomuto partition scheme).
+        /// </summary>
+        private int PartitionForSelect(int left, int right, int axis)
+        {
+            float pivotValue = points[permutation[right]][axis];
+            int storeIndex = left;
+            for (int i = left; i < right; i++)
+            {
+                if (points[permutation[i]][axis] < pivotValue)
+                {
+                    (permutation[storeIndex], permutation[i]) = (permutation[i], permutation[storeIndex]);
+                    storeIndex++;
+                }
+            }
+            (permutation[right], permutation[storeIndex]) = (permutation[storeIndex], permutation[right]);
+            return storeIndex;
+        }
+
 
         private void ResetPermutation()
         {
@@ -340,83 +378,29 @@ namespace GalacticBoundStudios.DataScribes.Managed.Trees
 
         private int GetNode()
         {
-            if (nodeCount >= nodes.Length)
+            // Reset the node before returning its index
+            nodes.Add(new Node
             {
-                nodes.Resize((int)(nodes.Length * 1.5), NativeArrayOptions.UninitializedMemory);
-            }
-            ResetNode(nodeCount);
-            return nodeCount++;
-        }
-
-        private void ResetNode(int nodeIndex)
-        {
-            nodes[nodeIndex] = new Node
-            {
-                partitionAxis = -1,
-                partitionCoordinate = 0,
+                partitionAxis = -1, // Indicates a leaf node
                 negativeChildIndex = -1,
-                positiveChildIndex = -1,
-                start = -1,
-                end = -1
-            };
+                positiveChildIndex = -1
+            });
+            return nodeCount++;
         }
 
         private KDBounds MakeRootBounds()
         {
-            float3 min = float.MaxValue;
-            float3 max = float.MinValue;
+            if (points.Length == 0) return default;
 
-            int evenCount = points.Length >> 1;
+            float3 min = new float3(float.MaxValue);
+            float3 max = new float3(float.MinValue);
 
-            for (int i = 0; i < evenCount; i += 2)
+            for (int i = 0; i < points.Length; i++)
             {
-                int j = i + 1;
-
-                if (points[i].x > points[j].x)
-                {
-                    min.x = math.min(min.x, points[j].x);
-                    max.x = math.max(max.x, points[i].x);
-                }
-                else
-                {
-                    min.x = math.min(min.x, points[i].x);
-                    max.x = math.max(max.x, points[j].x);
-                }
-
-                if (points[i].y > points[j].y)
-                {
-                    min.y = math.min(min.y, points[j].y);
-                    max.y = math.max(max.y, points[i].y);
-                }
-                else
-                {
-                    min.y = math.min(min.y, points[i].y);
-                    max.y = math.max(max.y, points[j].y);
-                }
-
-                if (points[i].z > points[j].z)
-                {
-                    min.z = math.min(min.z, points[j].z);
-                    max.z = math.max(max.z, points[i].z);
-                }
-                else
-                {
-                    min.z = math.min(min.z, points[i].z);
-                    max.z = math.max(max.z, points[j].z);
-                }
+                min = math.min(min, points[i]);
+                max = math.max(max, points[i]);
             }
-
-            if ((points.Length & 1) == 1)
-            {
-                min = math.min(min, points[points.Length - 1]);
-                max = math.max(max, points[points.Length - 1]);
-            }
-
-            return new KDBounds
-            {
-                minBounds = min,
-                maxBounds = max
-            };                
+            return new KDBounds { minBounds = min, maxBounds = max };
         }
 
         public void QueryRadius(float3 point, float radius, NativeList<int> result)
@@ -424,32 +408,22 @@ namespace GalacticBoundStudios.DataScribes.Managed.Trees
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-
-            if (count == 0)
-            {
-                return;
-            }
+            if (points.Length == 0) return;
 
             float radiusSquared = radius * radius;
 
-            // Use a queue to traverse the tree
-            NativeQueue<int> queue = new NativeQueue<int>(Allocator.TempJob);
-            queue.Enqueue(0);
+            NativeQueue<int> queue = new NativeQueue<int>(Allocator.Temp);
+            queue.Enqueue(0); // Start with the root node
 
-            while (!queue.IsEmpty())
+            while (queue.TryDequeue(out int nodeIndex))
             {
-                int nodeIndex = queue.Dequeue();
                 Node node = nodes[nodeIndex];
 
                 if (node.IsLeaf)
                 {
-                    Assert.IsTrue(node.end - node.start <= leafCapacity);
                     for (int i = node.start; i < node.end; i++)
                     {
-                        float3 pointInTree = points[permutation[i]];
-                        float distanceSquared = math.lengthsq(pointInTree - point);
-
-                        if (distanceSquared <= radiusSquared)
+                        if (math.lengthsq(points[permutation[i]] - point) <= radiusSquared)
                         {
                             result.Add(permutation[i]);
                         }
@@ -458,119 +432,108 @@ namespace GalacticBoundStudios.DataScribes.Managed.Trees
                 else
                 {
                     int partitionAxis = node.partitionAxis;
+                    float pointCoord = point[partitionAxis];
                     float partitionCoord = node.partitionCoordinate;
 
-                    float3 closestPoint = node.bounds.ClosestPoint(point);
+                    int firstChild = (pointCoord < partitionCoord) ? node.negativeChildIndex : node.positiveChildIndex;
+                    int secondChild = (pointCoord < partitionCoord) ? node.positiveChildIndex : node.negativeChildIndex;
 
-                    if ((closestPoint[partitionAxis] - partitionCoord) < 0)
+                    // Always traverse the first, more likely child's branch
+                    queue.Enqueue(firstChild);
+
+                    // Only traverse the second child's branch if the query sphere crosses the splitting plane
+                    float distToPlaneSq = (pointCoord - partitionCoord) * (pointCoord - partitionCoord);
+                    if (distToPlaneSq <= radiusSquared)
                     {
-                        queue.Enqueue(node.negativeChildIndex);
-
-                        float sqrDist = math.lengthsq(closestPoint - point);
-
-                        if (nodes[node.positiveChildIndex].Count != 0 && sqrDist <= radiusSquared)
-                        {
-                            queue.Enqueue(node.positiveChildIndex);
-                        }
-                    }
-                    else
-                    {
-                        queue.Enqueue(node.positiveChildIndex);
-
-                        float sqrDist = math.lengthsq(closestPoint - point);
-
-                        if (nodes[node.negativeChildIndex].Count != 0 && sqrDist <= radiusSquared)
-                        {
-                            queue.Enqueue(node.negativeChildIndex);
-                        }
+                        queue.Enqueue(secondChild);
                     }
                 }
             }
-
             queue.Dispose();
         }
 
-        public void QueryKNearest(float3 point, int k, NativeList<int> result)
+        public void QueryKNearest(float3 point, int k, NativeList<int> result, bool sortResult = true)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
+            if (points.Length == 0 || k <= 0) return;
 
-            // Use a max heap so that the farthest point is at the top and can be dropped
-            NativeMaxHeap<float, int> heap = new NativeMaxHeap<float, int>(Allocator.TempJob, false);
-
-            // Use a queue to traverse the tree
+            // Use a max heap so that the farthest point is always at the top and can be dropped
+            var heap = new NativeMaxHeap<float, int>(Allocator.Temp, false, k);
+            
             NativeQueue<int> queue = new NativeQueue<int>(Allocator.Temp);
-            queue.Enqueue(0);
-            while (queue.Count > 0)
+            queue.Enqueue(0); // Start with the root node
+
+            while (queue.TryDequeue(out int nodeIndex))
             {
-                int nodeIndex = queue.Dequeue();
                 Node node = nodes[nodeIndex];
 
                 if (node.IsLeaf)
                 {
                     for (int i = node.start; i < node.end; i++)
                     {
-                        float3 pointInTree = points[permutation[i]];
-                        float distanceSquared = math.lengthsq(pointInTree - point);
-
-                        // Just add the item to the heap, it will drop the largest item if it is full
-                        heap.Add(distanceSquared, permutation[i]);
+                        float distSq = math.lengthsq(points[permutation[i]] - point);
+                        heap.Add(distSq, permutation[i]);
                     }
                 }
                 else
                 {
-                    float3 leftClosestPoint = nodes[node.negativeChildIndex].bounds.ClosestPoint(point);
-                    float3 rightClosestPoint = nodes[node.positiveChildIndex].bounds.ClosestPoint(point);
-
-                    float leftNodeDist = math.lengthsq(leftClosestPoint - point);
-                    float rightNodeDist = math.lengthsq(rightClosestPoint - point);
-
-                    if (heap.IsEmpty || leftNodeDist < heap.PeekMax().Item1)
+                    float pointCoord = point[node.partitionAxis];
+                    float partitionCoord = node.partitionCoordinate;
+                    
+                    int firstChild = (pointCoord < partitionCoord) ? node.negativeChildIndex : node.positiveChildIndex;
+                    int secondChild = (pointCoord < partitionCoord) ? node.positiveChildIndex : node.negativeChildIndex;
+                    
+                    // Always check the closer child's subtree first.
+                    queue.Enqueue(firstChild);
+                    
+                    // Only check the second child if its bounds are potentially closer
+                    // than the farthest neighbor we've found so far.
+                    float distToPlaneSq = (pointCoord - partitionCoord) * (pointCoord - partitionCoord);
+                    if (heap.Count < k || distToPlaneSq < heap.PeekMax().Item1)
                     {
-                        queue.Enqueue(node.negativeChildIndex);
-                    }
-                    if (heap.IsEmpty || rightNodeDist < heap.PeekMax().Item1)
-                    {
-                        queue.Enqueue(node.positiveChildIndex);
+                        queue.Enqueue(secondChild);
                     }
                 }
             }
 
             // Copy the results from the heap to the result list
-            while (!heap.IsEmpty)
+            while (heap.TryPopMax(out var item))
             {
-                result.Add(heap.PopMax().Item2);
+                result.Add(item.Item2);
+            }
+
+            if (sortResult)
+            {
+                result.Sort();
             }
 
             heap.Dispose();
             queue.Dispose();
         }
 
-        public void QueryInterval(float3 min, float3 max, NativeList<int> result)
+        public void QueryInterval(float3 queryMin, float3 queryMax, NativeList<int> result)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif // ENABLE_UNITY_COLLECTIONS_CHECKS
+#endif
+            if (points.Length == 0) return;
 
-            // Use a queue to traverse the tree
             NativeQueue<int> queue = new NativeQueue<int>(Allocator.Temp);
-            queue.Enqueue(0);
+            queue.Enqueue(0); // Start with root node
 
-            while (!queue.IsEmpty())
+            while(queue.TryDequeue(out int nodeIndex))
             {
-                int nodeIndex = queue.Dequeue();
                 Node node = nodes[nodeIndex];
 
                 if (node.IsLeaf)
                 {
                     for (int i = node.start; i < node.end; i++)
                     {
-                        float3 pointInTree = points[permutation[i]];
-
-                        if (pointInTree.x >= min.x && pointInTree.x <= max.x &&
-                            pointInTree.y >= min.y && pointInTree.y <= max.y &&
-                            pointInTree.z >= min.z && pointInTree.z <= max.z)
+                        float3 p = points[permutation[i]];
+                        // Check if the point is within the query bounds
+                        if (math.all(p >= queryMin) && math.all(p <= queryMax))
                         {
                             result.Add(permutation[i]);
                         }
@@ -578,34 +541,37 @@ namespace GalacticBoundStudios.DataScribes.Managed.Trees
                 }
                 else
                 {
-                    if (nodes[node.negativeChildIndex].bounds.maxBounds.x >= min.x && nodes[node.negativeChildIndex].bounds.minBounds.x <= max.x &&
-                        nodes[node.negativeChildIndex].bounds.maxBounds.y >= min.y && nodes[node.negativeChildIndex].bounds.minBounds.y <= max.y &&
-                        nodes[node.negativeChildIndex].bounds.maxBounds.z >= min.z && nodes[node.negativeChildIndex].bounds.minBounds.z <= max.z)
+                    // Check if negative child overlaps with the query interval
+                    if (BoundsOverlap(nodes[node.negativeChildIndex].bounds, queryMin, queryMax))
                     {
                         queue.Enqueue(node.negativeChildIndex);
                     }
-
-                    if (nodes[node.positiveChildIndex].bounds.maxBounds.x >= min.x && nodes[node.positiveChildIndex].bounds.minBounds.x <= max.x &&
-                        nodes[node.positiveChildIndex].bounds.maxBounds.y >= min.y && nodes[node.positiveChildIndex].bounds.minBounds.y <= max.y &&
-                        nodes[node.positiveChildIndex].bounds.maxBounds.z >= min.z && nodes[node.positiveChildIndex].bounds.minBounds.z <= max.z)
+                    
+                    // Check if positive child overlaps with the query interval
+                    if (BoundsOverlap(nodes[node.positiveChildIndex].bounds, queryMin, queryMax))
                     {
                         queue.Enqueue(node.positiveChildIndex);
                     }
                 }
             }
-
             queue.Dispose();
+        }
+
+        private bool BoundsOverlap(KDBounds nodeBounds, float3 queryMin, float3 queryMax)
+        {
+            // Check for non-overlap on each axis. If there's no overlap on any axis,
+            // the bounds do not intersect.
+            return math.all(nodeBounds.minBounds <= queryMax) && math.all(nodeBounds.maxBounds >= queryMin);
         }
 
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
-#endif // ENABLE_UNITY_COLLECTIONS_CHECKS
-
-            points.Dispose();
-            permutation.Dispose();
-            nodes.Dispose();
+#endif
+            if(points.IsCreated) points.Dispose();
+            if(permutation.IsCreated) permutation.Dispose();
+            if(nodes.IsCreated) nodes.Dispose();
         }
     }
 }

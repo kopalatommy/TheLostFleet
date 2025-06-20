@@ -55,5 +55,12 @@ namespace GalacticBoundStudios.HexTech
         public HexOrientation orientation;
         public float2 scale;
         public float3 origin;
+
+        public static HexMapTransformData Default => new HexMapTransformData
+        {
+            orientation = HexOrientation.FlatTop(),
+            scale = new float2(1f, 1f),
+            origin = float3.zero,
+        };
     }
 }

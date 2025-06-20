@@ -45,11 +45,11 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
 
             if (hexHollowData.isHollow) {
                 HexTechMapGenerationUtils.GenerateHexagonTriangles_Hollow(hexIndex, ref meshData.triangles);
-                HexTechMapGenerationUtils.GenerateHexagonVertices_Hollow(hexIndex, worldPos.x, worldPos.y, hexHollowData.innerRadius, in mapTransformData, mapTransformData.orientation, ref meshData.vertices);
+                HexTechMapGenerationUtils.GenerateHexagonVertices_Hollow(hexIndex, worldPos.x, worldPos.y, hexHollowData.innerRadius, in mapTransformData, ref meshData.vertices);
                 HexTechMapGenerationUtils.GenerateHexagonColors_Hollow(hexIndex, ref meshData.colors, ref random);
                 HexTechMapGenerationUtils.GenerateHexagonMetaData_Hollow(hexIndex, coord, ref meshData.uv2);
             } else {
-                HexTechMapGenerationUtils.GenerateHexagonVertices_Solid(hexIndex, worldPos.x, worldPos.y, hexHollowData.innerRadius, in mapTransformData, mapTransformData.orientation, ref meshData.vertices);
+                HexTechMapGenerationUtils.GenerateHexagonVertices_Solid(hexIndex, worldPos.x, worldPos.y, in mapTransformData, ref meshData.vertices);
                 HexTechMapGenerationUtils.GenerateHexagonTriangles_Solid(hexIndex, ref meshData.triangles);
                 HexTechMapGenerationUtils.GenerateHexagonColors_Solid(hexIndex, ref meshData.colors, ref random);
                 HexTechMapGenerationUtils.GenerateHexagonMetaData_Solid(hexIndex, coord, ref meshData.uv2);

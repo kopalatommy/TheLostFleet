@@ -9,6 +9,8 @@ namespace GalacticBoundStudios.BattleBrain.CameraControls
     [CreateAssetMenu(menuName = "RTSCamera/RTSCameraConfig")]
     public class RTSCameraConfig : ScriptableObject
     {
+        public static RTSCameraConfig Default => new RTSCameraConfig();
+
         // Determines how fast the camera moves horizontally
         public float movementSpeed = 20f;
         // Determines how fast the camera rotates

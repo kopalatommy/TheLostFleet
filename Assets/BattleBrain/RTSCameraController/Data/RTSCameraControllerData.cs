@@ -42,6 +42,9 @@ namespace GalacticBoundStudios.BattleBrain.CameraControls
         public readonly RefRO<RTSCameraMovementSettings> movementSettings;
         public readonly RefRW<RTSCameraMoveData> moveData;
         public readonly RefRO<RTSCameraSettings> cameraSettings;
+
+        // [Optional]
+        // public readonly RefRO<RTSCameraLockControlsTag> lockControls;
     }
 
     public struct RTSCameraInitialTransformData : IComponentData

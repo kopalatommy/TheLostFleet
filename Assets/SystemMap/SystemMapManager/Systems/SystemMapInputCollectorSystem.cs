@@ -31,11 +31,13 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.SystemMap
 
         protected override void OnCreate()
         {
+            Debug.Log("SystemMapInputCollectorSystem.OnCreate");
+
             updateQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<SystemMapEnableFlag>().WithAll<HexMapTransformData>().Build(EntityManager);
             RequireForUpdate(updateQuery);
 
             Entity inputDataEntity = EntityManager.CreateEntity(typeof(SystemMapInputData));
-            Entity rtsInputEntity = EntityManager.CreateEntity(typeof(RTSCameraMoveData));
+            // Entity rtsInputEntity = EntityManager.CreateEntity(typeof(RTSCameraMoveData));
             Entity focusCoordEntity = EntityManager.CreateEntity(typeof(SystemMapFocusHexagonData));
             Entity selectedCoordEntity = EntityManager.CreateEntity(typeof(SystemMapSelectedHexagonData));
 

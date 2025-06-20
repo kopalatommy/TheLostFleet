@@ -26,19 +26,18 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
             return new float3((size.x * math.cos(angle) * radius) * transformData.scale.x, 0, (size.y * math.sin(angle) * radius) * transformData.scale.y) + transformData.origin;
         }
 
-
-        public static void GenerateHexagonVertices_Hollow(int index, float xPos, float yPos, float innerRadius, in HexMapTransformData transformData, in HexOrientation hexOrientation, ref NativeArray<float3> vertices)
+        public static void GenerateHexagonVertices_Hollow(int index, float xPos, float yPos, float innerRadius, in HexMapTransformData transformData, ref NativeArray<float3> vertices)
         {
             // Generate the vertices for the hexagon
             int indexOffset = index * HEXAGON_HOLLOW_VERTS;
             for (int i = 0; i < 6; i++)
             {
-                vertices[indexOffset + i] = HexCornerOffset(hexOrientation, new float2(1, 1), i, innerRadius, in transformData) + new float3(xPos, 0, yPos) + transformData.origin;
-                vertices[indexOffset + i + 6] = HexCornerOffset(hexOrientation, new float2(1, 1), i, 1, in transformData) + new float3(xPos, 0, yPos) + transformData.origin;
+                vertices[indexOffset + i] = HexCornerOffset(transformData.orientation, new float2(1, 1), i, innerRadius, in transformData) + new float3(xPos, 0, yPos) + transformData.origin;
+                vertices[indexOffset + i + 6] = HexCornerOffset(transformData.orientation, new float2(1, 1), i, 1, in transformData) + new float3(xPos, 0, yPos) + transformData.origin;
             }
         }
 
-        public static void GenerateHexagonVertices_Solid(int index, float xPos, float yPos, float innerRadius, in HexMapTransformData transformData, in HexOrientation hexOrientation, ref NativeArray<float3> vertices)
+        public static void GenerateHexagonVertices_Solid(int index, float xPos, float yPos, in HexMapTransformData transformData, ref NativeArray<float3> vertices)
         {
             // Generate the vertices for the hexagon
             int indexOffset = index * HEXAGON_SOLID_VERTS;
@@ -46,7 +45,7 @@ namespace GalacticBoundStudios.HexTech.MapGeneration
             vertices[indexOffset] = new float3(xPos, 0, yPos);
             for (int i = 0; i < 6; i++)
             {
-                vertices[indexOffset + i + 1] = HexCornerOffset(hexOrientation, new float2(1, 1), i, 1, in transformData) + new float3(xPos, 0, yPos) + transformData.origin;
+                vertices[indexOffset + i + 1] = HexCornerOffset(transformData.orientation, new float2(1, 1), i, 1, in transformData) + new float3(xPos, 0, yPos) + transformData.origin;
             }
         }
 

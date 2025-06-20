@@ -29,7 +29,7 @@ namespace ProjectWorlds.UnitTests
                 NativeKDTree kDTree = new NativeKDTree(Allocator.TempJob);
                 kDTree.AddPoints(points);
 
-                bool success = kDTree.count == 1;
+                bool success = kDTree.Count == 1;
                 kDTree.Dispose();
 
                 return success;
@@ -54,7 +54,7 @@ namespace ProjectWorlds.UnitTests
             NativeKDTree kDTree = new NativeKDTree(Allocator.TempJob);
             kDTree.AddPoints(points);
 
-            bool success = kDTree.count == 100;
+            bool success = kDTree.Count == 100;
             kDTree.Dispose();
 
             return success;
@@ -72,7 +72,7 @@ namespace ProjectWorlds.UnitTests
             NativeKDTree kDTree = new NativeKDTree(Allocator.TempJob);
             kDTree.AddPoints(points);
 
-            bool success = kDTree.count == 1000;
+            bool success = kDTree.Count == 1000;
             kDTree.Dispose();
 
             return success;
@@ -96,7 +96,7 @@ namespace ProjectWorlds.UnitTests
             NativeKDTree kDTree = new NativeKDTree(Allocator.TempJob);
             kDTree.AddPoints(points);
 
-            bool success = kDTree.count == 100 * 100 * 100;
+            bool success = kDTree.Count == 100 * 100 * 100;
             kDTree.Dispose();
             points.Dispose();
         

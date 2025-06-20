@@ -13,7 +13,6 @@ namespace GalacticBoundStudios.BattleBrain.CameraControls
     {
         private EntityQuery cameraQuery;
 
-
         public void OnCreate(ref SystemState state)
         {
             cameraQuery = new EntityQueryBuilder(Allocator.Temp).WithAspect<RTSCameraAspect>().Build(ref state);
@@ -51,65 +50,87 @@ namespace GalacticBoundStudios.BattleBrain.CameraControls
             // Get the delta time
             float deltaTime = SystemAPI.Time.DeltaTime;
 
-            foreach (var aspect in SystemAPI.Query<RTSCameraAspect>())
+            Entity cameraEntity = cameraQuery.GetSingletonEntity();
+            // FML, this is necessary to prevent an annoying error every frame when getting the aspect
+            LocalTransform localTransform = state.EntityManager.GetComponentData<LocalTransform>(cameraEntity);
+
+            RTSCameraAspect cameraAspect = state.EntityManager.GetAspect<RTSCameraAspect>(cameraEntity);
+            UpdateCameraMovement(cameraAspect, ref state, deltaTime);
+
+
+            // NativeArray<Entity> cameraEntities = cameraQuery.ToEntityArray(Allocator.Temp);
+
+            // for (int i = 0; i < cameraEntities.Length; i++)
+            // {
+            //     RTSCameraAspect aspect = state.EntityManager.GetAspect<RTSCameraAspect>(cameraEntities[i]);
+
+            //     UpdateCameraMovement(aspect, ref state, deltaTime);
+            // }
+
+            // cameraEntities.Dispose();
+        }
+
+        private void UpdateCameraMovement(RTSCameraAspect aspect, ref SystemState state, float deltaTime)
+        {
+            // If the entity has the lock controls tag, do nothing
+            // if (aspect.lockControls.IsValid)
+            // {
+            //     return;
+            // }
+
+            float3 position = aspect.localTransform.ValueRO.Position;
+            quaternion rotation = aspect.localTransform.ValueRO.Rotation;
+
+            // Apply the movement settings to the camera
+            position += aspect.moveData.ValueRO.horizontalMovement * aspect.movementSettings.ValueRO.movementSpeed * deltaTime;
+
+            // Apply the zoom settings to the camera
+            position += aspect.localTransform.ValueRW.Forward() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
+
+            // Check if there is bounds data
+            if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity))
             {
-                if (state.EntityManager.HasComponent<RTSCameraLockControlsTag>(aspect.entity))
-                {
-                    continue;
-                }
+                RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);
 
-                float3 position = aspect.localTransform.ValueRO.Position;
-                quaternion rotation = aspect.localTransform.ValueRO.Rotation;
-
-                // Apply the movement settings to the camera
-                position += aspect.moveData.ValueRO.horizontalMovement * aspect.movementSettings.ValueRO.movementSpeed * deltaTime;
-
-                // Apply the zoom settings to the camera
-                position += aspect.localTransform.ValueRW.Forward() * aspect.moveData.ValueRO.zoom * aspect.movementSettings.ValueRO.zoomSpeed * deltaTime;
-
-                // Check if there is bounds data
-                if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity)) {
-                    RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);
-
-                    // Clamp the camera's position to the bounds
-                    position = math.clamp(position, bounds.minBounds, bounds.maxBounds);
-                }
-
-                // Calculate the rotation around the x-axis
-                quaternion xRotation = quaternion.AxisAngle(new float3(1, 0, 0), math.radians(aspect.moveData.ValueRO.rotation.x * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
-
-                // Calculate the rotation around the y-axis
-                quaternion yRotation = quaternion.AxisAngle(new float3(0, 1, 0), math.radians(aspect.moveData.ValueRO.rotation.y * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
-
-                // Combine the rotations
-                quaternion combinedRotation = math.mul(yRotation, xRotation);
-
-                // Apply the combined rotation to the local transform
-                rotation = math.mul(rotation, combinedRotation);
-
-                // Ensure no rotation occurs around the z-axis
-                float3 euler = math.degrees(math.Euler(rotation));
-                euler.z = 0;
-
-                // Apply bounds to the rotation around the x-axis
-                // Check if there is bounds data
-                if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity)) {
-                    RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);
-
-                    // Clamp the camera's position to the bounds
-                    euler.x = math.clamp(euler.x, bounds.rotationBounds.x, bounds.rotationBounds.y);
-                }
-
-                rotation = quaternion.Euler(math.radians(euler));
-
-                // Update the camera's position and rotation
-                aspect.localTransform.ValueRW.Position = position;
-                aspect.localTransform.ValueRW.Rotation = rotation;
-
-                // Update the Camera GameObject
-                UnityEngine.Camera.main.transform.position = position;
-                UnityEngine.Camera.main.transform.rotation = rotation;
+                // Clamp the camera's position to the bounds
+                position = math.clamp(position, bounds.minBounds, bounds.maxBounds);
             }
+
+            // Calculate the rotation around the x-axis
+            quaternion xRotation = quaternion.AxisAngle(new float3(1, 0, 0), math.radians(aspect.moveData.ValueRO.rotation.x * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
+
+            // Calculate the rotation around the y-axis
+            quaternion yRotation = quaternion.AxisAngle(new float3(0, 1, 0), math.radians(aspect.moveData.ValueRO.rotation.y * aspect.movementSettings.ValueRO.rotationSpeed * deltaTime));
+
+            // Combine the rotations
+            quaternion combinedRotation = math.mul(yRotation, xRotation);
+
+            // Apply the combined rotation to the local transform
+            rotation = math.mul(rotation, combinedRotation);
+
+            // Ensure no rotation occurs around the z-axis
+            float3 euler = math.degrees(math.Euler(rotation));
+            euler.z = 0;
+
+            // Apply bounds to the rotation around the x-axis
+            // Check if there is bounds data
+            if (state.EntityManager.HasComponent<RTSCameraBounds>(aspect.entity))
+            {
+                RTSCameraBounds bounds = state.EntityManager.GetComponentData<RTSCameraBounds>(aspect.entity);
+
+                // Clamp the camera's position to the bounds
+                euler.x = math.clamp(euler.x, bounds.rotationBounds.x, bounds.rotationBounds.y);
+            }
+
+            rotation = quaternion.Euler(math.radians(euler));
+
+            // Update the camera's position and rotation
+            aspect.localTransform.ValueRW.Position = position;
+            aspect.localTransform.ValueRW.Rotation = rotation;
+
+            // Update the Camera GameObject
+            UnityEngine.Camera.main.transform.position = position;
+            UnityEngine.Camera.main.transform.rotation = rotation;
         }
     }
 }

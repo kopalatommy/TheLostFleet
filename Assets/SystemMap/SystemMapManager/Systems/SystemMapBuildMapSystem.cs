@@ -86,8 +86,6 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim
                     Value = float4x4.Translate(new float3(0, 0, 0))
                 });
 
-                // Create a RenderMeshDescription using the convenience constructor
-                // with named parameters.
                 RenderMeshDescription desc = new RenderMeshDescription(
                     shadowCastingMode: ShadowCastingMode.Off,
                     receiveShadows: false);

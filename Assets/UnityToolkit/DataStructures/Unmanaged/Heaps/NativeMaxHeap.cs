@@ -228,7 +228,21 @@ namespace GalacticBoundStudios.DataScribes.Unmanaged
             return (maxKey, maxValue);
         }
 
-        public void Clear(bool removeArrays=true)
+        public bool TryPopMax(out (TKey, TValue) result)
+        {
+            if (IsEmpty)
+            {
+                result = default;
+                return false;
+            }
+            else
+            {
+                result = PopMax();
+                return true;
+            }
+        }
+
+        public void Clear(bool removeArrays = true)
         {
             for (int i = 0; i < count; i++)
             {
