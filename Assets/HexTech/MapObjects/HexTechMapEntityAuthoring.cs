@@ -3,9 +3,11 @@ using GalacticBoundStudios.BattleBrain;
 using Unity.Entities;
 using UnityEngine;
 using Unity.Mathematics;
+using GalacticBoundStudios.GalaxyMap.Units;
 
 namespace GalacticBoundStudios.HexTech.MapEntities
 {
+    // This is an example of how to make an entity for the hexagon maps
     public class HexTechMapEntityAuthoring : MonoBehaviour
     {
         public HexCoord gridPosition;
@@ -42,6 +44,7 @@ namespace GalacticBoundStudios.HexTech.MapEntities
                 }
 
                 AddComponent(entity, new SelectableTag());
+                AddComponent(entity, new GalaxyMapUnitFlag());
             }
         }
     }

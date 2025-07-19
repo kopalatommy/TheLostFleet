@@ -10,6 +10,11 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
         public HexCoord target;
     }
 
+    public struct GalaxyMapPathFindingHighlightTileFlag : IComponentData
+    {
+
+    }
+
     public struct GalaxyMapPathInProgressTag : IComponentData
     {
 

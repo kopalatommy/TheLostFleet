@@ -14,6 +14,7 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 
         public static NativeKDMap<HexCoord> NodeMap { get; private set; }
         public static NativeHashMap<HexCoord, Entity> EntityMap { get; private set; }
+        public static NativeHashMap<HexCoord, float> MovementCostMap { get; private set; }
 
         protected override void OnCreate()
         {
@@ -21,6 +22,7 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 
             NodeMap = new NativeKDMap<HexCoord>(Allocator.Persistent);
             EntityMap = new NativeHashMap<HexCoord, Entity>(100, Allocator.Persistent);
+            MovementCostMap = new NativeHashMap<HexCoord, float>(100, Allocator.Persistent);
 
             EntityQueryBuilder queryBuilder = new EntityQueryBuilder(Allocator.Temp);
 
@@ -43,6 +45,7 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 
             NativeKDMap<HexCoord> updated = NodeMap;
             NativeHashMap<HexCoord, Entity> updatedEntityMap = EntityMap;
+            NativeHashMap<HexCoord, float> movementCostMap = MovementCostMap;
 
             NativeArray<Entity> notProcessed = notProcessedTilesQuery.ToEntityArray(Allocator.Temp);
 
@@ -58,11 +61,19 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 
                 EntityMap.Add(valuesToAdd[i], notProcessed[i]);
 
+                // ToDo, need to add component that tracks movement cost
+                movementCostMap[valuesToAdd[i]] = 1;
+
+                updatedEntityMap[valuesToAdd[i]] = notProcessed[i];
+
                 EntityManager.AddComponentData(notProcessed[i], new GalaxyMapProcessedTag());
             }
 
             updated.AddData(pointsToAdd, valuesToAdd);
             NodeMap = updated;
+
+            MovementCostMap = movementCostMap;
+            EntityMap = updatedEntityMap;
         }
 
         private void OnDestroy(ref SystemState state)
@@ -70,7 +81,12 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
             Debug.Log("GalaxyMapTileManager.OnDestroy");
 
             NodeMap.Dispose();
+            EntityMap.Dispose();
+            MovementCostMap.Dispose();
+
             NodeMap = default;
+            EntityMap = default;
+            MovementCostMap = default;
         }
     }
 }

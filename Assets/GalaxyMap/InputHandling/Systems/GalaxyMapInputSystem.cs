@@ -1,5 +1,9 @@
+using System.Linq;
+using GalacticBoundStudios.BattleBrain;
 using GalacticBoundStudios.BattleBrain.CameraControls;
+using GalacticBoundStudios.GalaxyMap.Units;
 using GalacticBoundStudios.HexTech;
+using GalacticBoundStudios.HexTech.PathFinding;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.UniversalDelegates;
@@ -22,6 +26,8 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
         private EntityQuery selectedTileQuery;
         private EntityQuery focusTileQuery;
 
+        private EntityQuery selectedUnitQuery;
+
         protected override void OnCreate()
         {
             EntityQueryBuilder queryBuilder = new EntityQueryBuilder(Allocator.Temp);
@@ -37,6 +43,9 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 
             queryBuilder.Reset();
             focusTileQuery = queryBuilder.WithAll<GalaxyMapFocusTileFlag>().Build(EntityManager);
+
+            queryBuilder.Reset();
+            selectedUnitQuery = queryBuilder.WithAll<SelectedTag>().WithAll<GalaxyMapUnitFlag>().Build(EntityManager);
         }
 
         protected override void OnUpdate()
@@ -206,11 +215,38 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
                         Entity selected = selectedTileQuery.GetSingletonEntity();
                         EntityManager.RemoveComponent<GalaxyMapSelectedTileFlag>(selected);
                         EntityManager.RemoveComponent<URPMaterialPropertyBaseColor>(selected);
+
+                        if (selectedUnitQuery.CalculateEntityCount() > 0)
+                        {
+                            Debug.Log("Adding path requests: " + selectedUnitQuery.CalculateEntityCount());
+
+                            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+
+                            HexCoord targetCoord = EntityManager.GetComponentData<HexTechMapEntityTag>(tileEntity).gridPosition;
+
+                            NativeArray<Entity> selectedEntities = selectedUnitQuery.ToEntityArray(Allocator.Temp);
+                            for (int i = 0; i < selectedEntities.Length; i++)
+                            {
+                                ecb.AddComponent(selectedEntities[i], new GalaxyMapPathRequest
+                                {
+                                    start = EntityManager.GetComponentData<HexCoord>(selectedEntities[i]),
+                                    target = targetCoord,
+                                });
+                            }
+
+                            ecb.Playback(EntityManager);
+                            ecb.Dispose();
+                            selectedEntities.Dispose();
+                        }
+                        else
+                        {
+                            Debug.Log("No selected units");
+                        }
                     }
 
                     EntityManager.AddComponentData(tileEntity, new GalaxyMapSelectedTileFlag());
                     // Also has the cursor focus
-                    EntityManager.AddComponentData(tileEntity, new GalaxyMapFocusTileFlag());
+                    // EntityManager.AddComponentData(tileEntity, new GalaxyMapFocusTileFlag());
                     EntityManager.AddComponentData<URPMaterialPropertyBaseColor>(tileEntity, new URPMaterialPropertyBaseColor
                     {
                         Value = new float4(1, 1, 0, 1)

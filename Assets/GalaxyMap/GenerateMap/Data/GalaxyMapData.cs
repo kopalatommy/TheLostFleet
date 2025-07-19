@@ -8,4 +8,11 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
     {
 
     }
+
+    // This is used to pass unit prefabs to the generate map system
+    public struct GalaxyMapUnitPrefabsData : IBufferElementData
+    {
+        // The prefab entity, Called Value because this seems to be the Unity Standard
+        public Entity Value;
+    }
 }

@@ -1,6 +1,7 @@
 using GalacticBoundStudios.BattleBrain.CameraControls;
 using GalacticBoundStudios.BattleBrain.TurnBased;
 using GalacticBoundStudios.HexTech;
+using GalacticBoundStudios.HexTech.PathFinding;
 using GalacticBoundStudios.MeshMania;
 using Unity.Collections;
 using Unity.Entities;
@@ -10,6 +11,7 @@ using Unity.Transforms;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SocialPlatforms;
 
 namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 {
@@ -46,6 +48,7 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
             CreateEmptyMap(ref state);
             SpawnCameraEntity(ref state);
             StartUISystem(ref state);
+            SpawnMapUnits(ref state);
 
             // Create the tag to prevent updates
             Entity e = state.EntityManager.CreateEntity();
@@ -180,6 +183,47 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
         {
             Entity e = state.EntityManager.CreateEntity();
             state.EntityManager.AddComponentData<TurnBasedEnableFlag>(e, new TurnBasedEnableFlag());
+        }
+
+        private void SpawnMapUnits(ref SystemState state)
+        {
+            Entity container = updateQuery.GetSingletonEntity();
+
+            if (!state.EntityManager.HasBuffer<GalaxyMapUnitPrefabsData>(container))
+            {
+                Debug.Log("Not spawning units, no buffer");
+                return;
+            }
+
+            DynamicBuffer<GalaxyMapUnitPrefabsData> prefabsData = state.EntityManager.GetBuffer<GalaxyMapUnitPrefabsData>(container);
+
+            if (prefabsData.IsEmpty)
+            {
+                Debug.Log("Not spawning units, buffer is empty");
+                return;
+            }
+
+            Entity prefab = prefabsData[0].Value;
+
+            Entity unitEntity = state.EntityManager.Instantiate(prefab);
+            SetEntityLocOnMap(unitEntity, new HexCoord(0, 0), state.EntityManager);
+        }
+
+        public void SetEntityLocOnMap(Entity entity, HexCoord coord, EntityManager entityManager)
+        {
+            float2 tempPos = HexMath.HexToPixel(coord, HexMapTransformData.Default);
+
+            entityManager.SetComponentData<HexTechMapEntityTag>(entity, new HexTechMapEntityTag
+            {
+                gridPosition = coord
+            });
+
+            entityManager.SetComponentData<LocalTransform>(entity, new LocalTransform
+            {
+                Scale = 1,
+                Rotation = quaternion.identity,
+                Position = new float3(tempPos.x, 0, tempPos.y)
+            });
         }
 
         public void OnStopRunning(ref SystemState state)

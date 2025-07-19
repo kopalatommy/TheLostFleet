@@ -3,6 +3,8 @@ using Unity.Collections;
 using UnityEngine;
 using Unity.Jobs;
 using GalacticBoundStudios.HexTech;
+using Unity.Rendering;
+using Unity.Mathematics;
 
 namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 {
@@ -26,6 +28,7 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
         private EntityQuery updateQuery;
 
         private EntityQuery waitingQuery;
+        private EntityQuery highlightedTilesQuery;
 
         private void OnCreate(ref SystemState state)
         {
@@ -35,6 +38,8 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
             state.RequireForUpdate(updateQuery);
 
             waitingQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<GalaxyMapPathRequest>().WithNone<GalaxyMapPathInProgressTag>().Build(ref state);
+
+            highlightedTilesQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<GalaxyMapPathFindingHighlightTileFlag>().Build(ref state);
         }
 
         private void OnUpdate(ref SystemState state)
@@ -67,7 +72,8 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
             {
                 request = state.EntityManager.GetComponentData<GalaxyMapPathRequest>(requester),
                 requester = requester,
-                resultPath = new NativeList<HexCoord>(10, Allocator.Persistent)
+                resultPath = new NativeList<HexCoord>(10, Allocator.Persistent),
+                costMap = GalaxyMapTileManager.MovementCostMap,
             };
 
             state.EntityManager.AddComponentData(requester, new GalaxyMapPathInProgressTag());
@@ -106,17 +112,41 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
             }
             else
             {
+                NativeHashMap<HexCoord, Entity> entityMap = GalaxyMapTileManager.EntityMap;
+
+                EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+
+                NativeArray<Entity> highlightedEntities = highlightedTilesQuery.ToEntityArray(Allocator.Temp);
+                for (int i = 0; i < highlightedEntities.Length; i++)
+                {
+                    ecb.RemoveComponent<URPMaterialPropertyBaseColor>(highlightedEntities[i]);
+                    ecb.RemoveComponent<GalaxyMapPathFindingHighlightTileFlag>(highlightedEntities[i]);
+                }
+
                 string pathStr = "(start: " + jobContext.job.request.start + ") ";
                 DynamicBuffer<GalaxyMapPath> pathBuffer = state.EntityManager.AddBuffer<GalaxyMapPath>(jobContext.job.requester);
                 for (int i = 0; i < jobContext.job.resultPath.Length; i++)
                 {
                     pathStr += jobContext.job.resultPath[i].ToString() + " -> ";
                     pathBuffer.Add(jobContext.job.resultPath[i]);
+
+                    ecb.AddComponent(entityMap[jobContext.job.resultPath[i]], new URPMaterialPropertyBaseColor
+                    {
+                        Value = new float4(0, 1, 0, 1)
+                    });
+                    ecb.AddComponent(entityMap[jobContext.job.resultPath[i]], new GalaxyMapPathFindingHighlightTileFlag());
+
+                    // state.EntityManager.AddComponentData(entityMap[jobContext.job.resultPath[i]], new URPMaterialPropertyBaseColor
+                    // {
+                    //     Value = new float4(0, 1, 0, 1)
+                    // });
                 }
                 pathStr.Remove(pathStr.Length - 4);
 
                 pathStr += " (end: " + jobContext.job.request.target + ")";
                 Debug.Log(pathStr);
+
+                ecb.Playback(state.EntityManager);
             }
             jobContext.job.resultPath.Dispose();
 
