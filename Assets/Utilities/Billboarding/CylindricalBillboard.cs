@@ -20,8 +20,11 @@ namespace GalacticBoundStudios.Utilities.Billboards
             // Lock camera’s Y to our Y so we only rotate around Y
             camPos.y = transform.position.y;
 
+            Vector3 direction = transform.position - _cam.transform.position;
+            transform.rotation = Quaternion.LookRotation(direction);
+
             // Make the object look at that adjusted position
-            transform.LookAt(camPos);
+            // transform.LookAt(camPos);
 
             // Optionally, zero out any X/Z tilt (just in case)
             // Vector3 e = transform.rotation.eulerAngles;

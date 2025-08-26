@@ -151,7 +151,7 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
 
         float3 ReadRotation(in LocalTransform localTransform)
         {
-            return (new float3(0, 1, 0)) * inputSystem.HexMap.Rotate.ReadValue<float>();
+            return new float3(0, 1, 0) * inputSystem.HexMap.Rotate.ReadValue<float>();
         }
 
         float3 ReadMouseRotation()
@@ -176,11 +176,15 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
             return new float3(0, 0, 0);
         }
 
-        private void HandleMouseInput()
+
+        #region Mouse Input
+
+        // Uses math to determine which cursor is under the mouse pointer
+        HexCoord DetermineCoordUnderCursor()
         {
             Entity cameraEntity = rtsCameraQuery.GetSingletonEntity();
-
             RTSCameraSettings cameraSettings = EntityManager.GetComponentData<RTSCameraSettings>(cameraEntity);
+
             LocalTransform cameraTransform = EntityManager.GetComponentData<LocalTransform>(cameraEntity);
 
             Ray ray;
@@ -194,87 +198,122 @@ namespace GalacticBoundStudios.EchoesOfTheFarRim.GalaxyMap
                 ray = CameraUtilities.ScreenPointToRay_Standard(inputSystem.HexMap.CursorPosition.ReadValue<Vector2>(), cameraSettings.fieldOfView, cameraSettings.aspect, cameraTransform.Position, cameraTransform.Rotation);
             }
             float3 intersection = DetermineRayIntersection(ray);
+
+            // Note: This is the coord under the cursor, but if could be outside of the map (not generated)
             coord = HexMath.PixelToHex(new float2(intersection.x, intersection.z), HexMapTransformData.Default);
 
+            // This fixes the edge case where the cursor is over a point not on the map. Searches a KD-Tree of all coords to select the closest one
             NativeList<HexCoord> resultList = new NativeList<HexCoord>(Allocator.Temp);
             GalaxyMapTileManager.NodeMap.QueryKNearest(intersection, 1, resultList);
 
+            if (!resultList.IsEmpty)
+            {
+                return resultList[0];
+            }
+            else
+            {
+                // Default to 0,0.
+                // ToDo: make exception?
+                return new HexCoord(0, 0);
+            }
+        }
+
+        void HandleSelectTile(in HexCoord mouseCoord, in Entity tileEntity)
+        {
+            // If the tile is already selected, nothing to do
+            if (EntityManager.HasComponent<GalaxyMapSelectedTileFlag>(tileEntity))
+            {
+                return;
+            }
+
+            // If a different tile has already been selected, de-select it
+            if (selectedTileQuery.CalculateEntityCount() > 0)
+            {
+                Entity selected = selectedTileQuery.GetSingletonEntity();
+                EntityManager.RemoveComponent<GalaxyMapSelectedTileFlag>(selected);
+                EntityManager.RemoveComponent<URPMaterialPropertyBaseColor>(selected);
+
+                if (selectedUnitQuery.CalculateEntityCount() > 0)
+                {
+                    Debug.Log("Adding path requests: " + selectedUnitQuery.CalculateEntityCount());
+
+                    EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+
+                    HexCoord targetCoord = EntityManager.GetComponentData<HexTechMapEntityTag>(tileEntity).gridPosition;
+
+                    NativeArray<Entity> selectedEntities = selectedUnitQuery.ToEntityArray(Allocator.Temp);
+                    for (int i = 0; i < selectedEntities.Length; i++)
+                    {
+                        ecb.AddComponent(selectedEntities[i], new GalaxyMapPathRequest
+                        {
+                            start = EntityManager.GetComponentData<HexCoord>(selectedEntities[i]),
+                            target = targetCoord,
+                        });
+                    }
+
+                    ecb.Playback(EntityManager);
+                    ecb.Dispose();
+                    selectedEntities.Dispose();
+                }
+                else
+                {
+                    Debug.Log("No selected units");
+                }
+            }
+
+            EntityManager.AddComponentData(tileEntity, new GalaxyMapSelectedTileFlag());
+            // Also has the cursor focus
+            // EntityManager.AddComponentData(tileEntity, new GalaxyMapFocusTileFlag());
+            EntityManager.AddComponentData<URPMaterialPropertyBaseColor>(tileEntity, new URPMaterialPropertyBaseColor
+            {
+                Value = new float4(1, 1, 0, 1)
+            });
+        }
+
+        // If the current coord under the mouse is not selected, highlight it
+        void HandleHighlightMouseCoord(in Entity tileEntity)
+        {
+            if (focusTileQuery.CalculateEntityCount() > 0)
+            {
+                Entity selected = focusTileQuery.GetSingletonEntity();
+                EntityManager.RemoveComponent<GalaxyMapFocusTileFlag>(selected);
+                if (!EntityManager.HasComponent<GalaxyMapSelectedTileFlag>(selected))
+                {
+                    EntityManager.RemoveComponent<URPMaterialPropertyBaseColor>(selected);
+                }
+            }
+
+            EntityManager.AddComponentData(tileEntity, new GalaxyMapFocusTileFlag());
+
+            // Override color only if not already selected
+            if (!EntityManager.HasComponent<GalaxyMapSelectedTileFlag>(tileEntity))
+            {
+                EntityManager.AddComponentData<URPMaterialPropertyBaseColor>(tileEntity, new URPMaterialPropertyBaseColor
+                {
+                    Value = new float4(0, 0, 1, 1)
+                });
+            }
+        }
+
+        #endregion // Mouse Input
+
+        private void HandleMouseInput()
+        {
+            HexCoord mouseCoord = DetermineCoordUnderCursor();
+
             // No reason to continue on if the cursor is not over a tile
-            if (resultList.IsEmpty || !GalaxyMapTileManager.EntityMap.TryGetValue(coord, out Entity tileEntity))
+            if (!GalaxyMapTileManager.EntityMap.TryGetValue(mouseCoord, out Entity tileEntity))
             {
                 return;
             }
 
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
-                // If already selected, do nothing
-                if (!EntityManager.HasComponent<GalaxyMapSelectedTileFlag>(tileEntity))
-                {
-                    if (selectedTileQuery.CalculateEntityCount() > 0)
-                    {
-                        Entity selected = selectedTileQuery.GetSingletonEntity();
-                        EntityManager.RemoveComponent<GalaxyMapSelectedTileFlag>(selected);
-                        EntityManager.RemoveComponent<URPMaterialPropertyBaseColor>(selected);
-
-                        if (selectedUnitQuery.CalculateEntityCount() > 0)
-                        {
-                            Debug.Log("Adding path requests: " + selectedUnitQuery.CalculateEntityCount());
-
-                            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-
-                            HexCoord targetCoord = EntityManager.GetComponentData<HexTechMapEntityTag>(tileEntity).gridPosition;
-
-                            NativeArray<Entity> selectedEntities = selectedUnitQuery.ToEntityArray(Allocator.Temp);
-                            for (int i = 0; i < selectedEntities.Length; i++)
-                            {
-                                ecb.AddComponent(selectedEntities[i], new GalaxyMapPathRequest
-                                {
-                                    start = EntityManager.GetComponentData<HexCoord>(selectedEntities[i]),
-                                    target = targetCoord,
-                                });
-                            }
-
-                            ecb.Playback(EntityManager);
-                            ecb.Dispose();
-                            selectedEntities.Dispose();
-                        }
-                        else
-                        {
-                            Debug.Log("No selected units");
-                        }
-                    }
-
-                    EntityManager.AddComponentData(tileEntity, new GalaxyMapSelectedTileFlag());
-                    // Also has the cursor focus
-                    // EntityManager.AddComponentData(tileEntity, new GalaxyMapFocusTileFlag());
-                    EntityManager.AddComponentData<URPMaterialPropertyBaseColor>(tileEntity, new URPMaterialPropertyBaseColor
-                    {
-                        Value = new float4(1, 1, 0, 1)
-                    });
-                }
+                HandleSelectTile(in mouseCoord, in tileEntity);
             }
             else if (!EntityManager.HasComponent<GalaxyMapFocusTileFlag>(tileEntity))
             {
-                if (focusTileQuery.CalculateEntityCount() > 0)
-                {
-                    Entity selected = focusTileQuery.GetSingletonEntity();
-                    EntityManager.RemoveComponent<GalaxyMapFocusTileFlag>(selected);
-                    if (!EntityManager.HasComponent<GalaxyMapSelectedTileFlag>(selected))
-                    {
-                        EntityManager.RemoveComponent<URPMaterialPropertyBaseColor>(selected);
-                    }
-                }
-
-                EntityManager.AddComponentData(tileEntity, new GalaxyMapFocusTileFlag());
-
-                // Override color only if not already selected
-                if (!EntityManager.HasComponent<GalaxyMapSelectedTileFlag>(tileEntity))
-                {
-                    EntityManager.AddComponentData<URPMaterialPropertyBaseColor>(tileEntity, new URPMaterialPropertyBaseColor
-                    {
-                        Value = new float4(0, 0, 1, 1)
-                    });
-                }
+                HandleHighlightMouseCoord(in tileEntity);
             }
 
             // if (inputSystem.HexMap.Click.triggered)
